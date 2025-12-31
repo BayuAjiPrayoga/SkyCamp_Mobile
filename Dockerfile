@@ -75,6 +75,13 @@ RUN rm -f /etc/apache2/mods-enabled/mpm_* \
     && a2enmod mpm_prefork \
     && a2enmod rewrite
 
-EXPOSE 80
+# Fix: Bind Apache to Railway's dynamic PORT
+# Railway injects a PORT variable, Apache must listen on it
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
-CMD ["apache2-foreground"]
+# Create entrypoint script to handle env substitution
+RUN echo '#!/bin/bash\n sed -i "s/Listen 80/Listen ${PORT:-80}/g" /etc/apache2/ports.conf && sed -i "s/:80/:${PORT:-80}/g" /etc/apache2/sites-available/*.conf && exec apache2-foreground' > /usr/local/bin/docker-entrypoint.sh \
+    && chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Use the new entrypoint
+CMD ["/usr/local/bin/docker-entrypoint.sh"]
