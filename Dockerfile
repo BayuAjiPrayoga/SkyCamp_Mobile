@@ -35,10 +35,14 @@ WORKDIR /var/www/html
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Install Node.js (Required for Vite build)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - \
+    && apt-get install -y nodejs
+
 # Copy composer files
 COPY composer.json composer.lock ./
 
-# Install dependencies
+# Install Composer dependencies
 RUN composer install \
     --no-dev \
     --no-scripts \
@@ -51,6 +55,9 @@ COPY . .
 
 # Complete composer install
 RUN composer dump-autoload --optimize --no-dev
+
+# Install NPM dependencies and Build Assets (Vite)
+RUN npm install && npm run build
 
 # Copy Nginx & Supervisor config
 COPY docker/nginx.conf /etc/nginx/sites-available/default
