@@ -27,13 +27,8 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     mbstring \
     bcmath
 
-# Enable Apache mod_rewrite and force mpm_prefork by deleting conflicting modules
-RUN a2enmod rewrite \
-    && rm -f /etc/apache2/mods-enabled/mpm_event.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_event.conf \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.load \
-    && rm -f /etc/apache2/mods-enabled/mpm_worker.conf \
-    && a2enmod mpm_prefork
+# Enable Apache mod_rewrite for Laravel
+RUN a2enmod rewrite
 
 # Set working directory
 WORKDIR /var/www/html
@@ -72,6 +67,13 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
+
+# NUCLEAR OPTION: Fix Apache MPM Conflict
+# Remove ALL MPM configurations from mods-enabled to ensure clean state
+# Then explicitly enable ONLY mpm_prefork
+RUN rm -f /etc/apache2/mods-enabled/mpm_* \
+    && a2enmod mpm_prefork \
+    && a2enmod rewrite
 
 EXPOSE 80
 
