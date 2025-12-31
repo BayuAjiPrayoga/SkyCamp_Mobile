@@ -5,7 +5,7 @@
         "dockerfilePath": "Dockerfile"
     },
     "deploy": {
-        "startCommand": "apache2-foreground",
+        "startCommand": "/usr/local/bin/run.sh",
         "restartPolicyType": "ON_FAILURE",
         "restartPolicyMaxRetries": 10
     }
