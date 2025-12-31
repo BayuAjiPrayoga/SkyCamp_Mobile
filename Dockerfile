@@ -69,4 +69,5 @@ RUN chmod +x /usr/local/bin/run.sh \
 EXPOSE 80
 
 # Start application
-CMD ["/usr/local/bin/run.sh"]
+# Use ENTRYPOINT to prevent Railway from overriding the startup command
+ENTRYPOINT ["/usr/local/bin/run.sh"]

@@ -9,9 +9,20 @@ rm -f /etc/apache2/mods-enabled/mpm_event.conf
 rm -f /etc/apache2/mods-enabled/mpm_worker.load
 rm -f /etc/apache2/mods-enabled/mpm_worker.conf
 
-# Log enabled modules for debugging
-echo "Enabled Apache Modules:"
-ls -1 /etc/apache2/mods-enabled/
+# Check if multiple MPMs exist
+COUNT=$(ls -1 /etc/apache2/mods-enabled/mpm_*.load 2>/dev/null | wc -l)
+if [ "$COUNT" -gt 1 ]; then
+    echo "CRITICAL ERROR: More than one MPM module enabled!"
+    ls -l /etc/apache2/mods-enabled/mpm_*
+    # Attempt force cleanup again
+    rm -f /etc/apache2/mods-enabled/mpm_event.load
+    rm -f /etc/apache2/mods-enabled/mpm_event.conf
+    rm -f /etc/apache2/mods-enabled/mpm_worker.load
+    rm -f /etc/apache2/mods-enabled/mpm_worker.conf
+fi
+
+echo "Starting Apache with modules:"
+ls -1 /etc/apache2/mods-enabled/ | grep mpm
 
 # Update Apache port to match Railway provided PORT
 sed -i "s/Listen 80/Listen ${PORT:-80}/g" /etc/apache2/ports.conf
