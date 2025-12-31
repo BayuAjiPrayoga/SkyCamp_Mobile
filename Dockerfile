@@ -27,10 +27,12 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     mbstring \
     bcmath
 
-# Enable Apache mod_rewrite for Laravel and fix MPM conflicts
+# Enable Apache mod_rewrite and force mpm_prefork by deleting conflicting modules
 RUN a2enmod rewrite \
-    && a2dismod mpm_event || true \
-    && a2dismod mpm_worker || true \
+    && rm -f /etc/apache2/mods-enabled/mpm_event.load \
+    && rm -f /etc/apache2/mods-enabled/mpm_event.conf \
+    && rm -f /etc/apache2/mods-enabled/mpm_worker.load \
+    && rm -f /etc/apache2/mods-enabled/mpm_worker.conf \
     && a2enmod mpm_prefork
 
 # Set working directory
