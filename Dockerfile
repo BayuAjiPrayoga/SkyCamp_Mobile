@@ -1,7 +1,8 @@
-FROM php:8.3-apache
+FROM php:8.3-apache-bookworm
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Use --no-install-recommends to avoid pulling in extra packages that might reset Apache config
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
