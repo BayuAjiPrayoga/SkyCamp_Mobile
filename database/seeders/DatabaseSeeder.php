@@ -112,80 +112,85 @@ class DatabaseSeeder extends Seeder
         $bookings = [];
         $statuses = ['pending', 'confirmed', 'completed', 'rejected', 'cancelled'];
 
-        // Past bookings (completed)
-        for ($i = 0; $i < 10; $i++) {
-            $customer = $customers[array_rand($customers)];
-            $kavling = $kavlingModels[array_rand($kavlingModels)];
-            $checkIn = now()->subDays(rand(30, 90));
-            $checkOut = $checkIn->copy()->addDays(rand(1, 3));
-            $nights = $checkIn->diffInDays($checkOut);
+        // Prevent duplicate bookings on re-seeding
+        if (Booking::count() > 0) {
+            $this->command->info('⏩ Bookings already exist, skipping booking generation.');
+        } else {
+            // Past bookings (completed)
+            for ($i = 0; $i < 10; $i++) {
+                $customer = $customers[array_rand($customers)];
+                $kavling = $kavlingModels[array_rand($kavlingModels)];
+                $checkIn = now()->subDays(rand(30, 90));
+                $checkOut = $checkIn->copy()->addDays(rand(1, 3));
+                $nights = $checkIn->diffInDays($checkOut);
 
-            $booking = Booking::create([
-                'code' => 'BK-' . now()->format('ymd') . '-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
-                'user_id' => $customer->id,
-                'kavling_id' => $kavling->id,
-                'tanggal_check_in' => $checkIn,
-                'tanggal_check_out' => $checkOut,
-                'total_harga' => $kavling->harga_per_malam * $nights,
-                'status' => 'completed',
-            ]);
-            $bookings[] = $booking;
-        }
-
-        // Recent & upcoming bookings (various statuses)
-        for ($i = 0; $i < 15; $i++) {
-            $customer = $customers[array_rand($customers)];
-            $kavling = $kavlingModels[array_rand($kavlingModels)];
-            $checkIn = now()->addDays(rand(-5, 30));
-            $checkOut = $checkIn->copy()->addDays(rand(1, 4));
-            $nights = $checkIn->diffInDays($checkOut);
-            $status = $statuses[array_rand($statuses)];
-
-            // Calculate total with equipment
-            $equipmentTotal = 0;
-            $booking = Booking::create([
-                'code' => 'BK-' . now()->format('ymd') . '-' . str_pad($i + 11, 3, '0', STR_PAD_LEFT),
-                'user_id' => $customer->id,
-                'kavling_id' => $kavling->id,
-                'tanggal_check_in' => $checkIn,
-                'tanggal_check_out' => $checkOut,
-                'total_harga' => $kavling->harga_per_malam * $nights,
-                'status' => $status,
-                'bukti_pembayaran' => $status !== 'pending' ? 'bukti/sample.jpg' : null,
-                'rejection_reason' => $status === 'rejected' ? 'Bukti pembayaran tidak valid' : null,
-                'qr_code' => $status === 'confirmed' ? 'qrcodes/' . Str::random(10) . '.svg' : null,
-            ]);
-
-            // Add random equipment to some bookings
-            if (rand(0, 1)) {
-                $equipItems = array_rand($peralatanModels, rand(1, 3));
-                if (!is_array($equipItems))
-                    $equipItems = [$equipItems];
-
-                foreach ($equipItems as $equipIdx) {
-                    $equip = $peralatanModels[$equipIdx];
-                    $qty = rand(1, 2);
-                    $subtotal = $equip->harga_sewa * $qty * $nights;
-
-                    BookingItem::create([
-                        'booking_id' => $booking->id,
-                        'peralatan_id' => $equip->id,
-                        'jumlah' => $qty,
-                        'harga_sewa' => $equip->harga_sewa,
-                        'subtotal' => $subtotal,
-                    ]);
-
-                    $equipmentTotal += $subtotal;
-                }
-
-                // Update total harga
-                $booking->update(['total_harga' => $booking->total_harga + $equipmentTotal]);
+                $booking = Booking::create([
+                    'code' => 'BK-' . now()->format('ymd') . '-' . str_pad($i + 1, 3, '0', STR_PAD_LEFT),
+                    'user_id' => $customer->id,
+                    'kavling_id' => $kavling->id,
+                    'tanggal_check_in' => $checkIn,
+                    'tanggal_check_out' => $checkOut,
+                    'total_harga' => $kavling->harga_per_malam * $nights,
+                    'status' => 'completed',
+                ]);
+                $bookings[] = $booking;
             }
 
-            $bookings[] = $booking;
-        }
+            // Recent & upcoming bookings (various statuses)
+            for ($i = 0; $i < 15; $i++) {
+                $customer = $customers[array_rand($customers)];
+                $kavling = $kavlingModels[array_rand($kavlingModels)];
+                $checkIn = now()->addDays(rand(-5, 30));
+                $checkOut = $checkIn->copy()->addDays(rand(1, 4));
+                $nights = $checkIn->diffInDays($checkOut);
+                $status = $statuses[array_rand($statuses)];
 
-        $this->command->info('✅ ' . count($bookings) . ' Bookings created');
+                // Calculate total with equipment
+                $equipmentTotal = 0;
+                $booking = Booking::create([
+                    'code' => 'BK-' . now()->format('ymd') . '-' . str_pad($i + 11, 3, '0', STR_PAD_LEFT),
+                    'user_id' => $customer->id,
+                    'kavling_id' => $kavling->id,
+                    'tanggal_check_in' => $checkIn,
+                    'tanggal_check_out' => $checkOut,
+                    'total_harga' => $kavling->harga_per_malam * $nights,
+                    'status' => $status,
+                    'bukti_pembayaran' => $status !== 'pending' ? 'bukti/sample.jpg' : null,
+                    'rejection_reason' => $status === 'rejected' ? 'Bukti pembayaran tidak valid' : null,
+                    'qr_code' => $status === 'confirmed' ? 'qrcodes/' . Str::random(10) . '.svg' : null,
+                ]);
+
+                // Add random equipment to some bookings
+                if (rand(0, 1)) {
+                    $equipItems = array_rand($peralatanModels, rand(1, 3));
+                    if (!is_array($equipItems))
+                        $equipItems = [$equipItems];
+
+                    foreach ($equipItems as $equipIdx) {
+                        $equip = $peralatanModels[$equipIdx];
+                        $qty = rand(1, 2);
+                        $subtotal = $equip->harga_sewa * $qty * $nights;
+
+                        BookingItem::create([
+                            'booking_id' => $booking->id,
+                            'peralatan_id' => $equip->id,
+                            'jumlah' => $qty,
+                            'harga_sewa' => $equip->harga_sewa,
+                            'subtotal' => $subtotal,
+                        ]);
+
+                        $equipmentTotal += $subtotal;
+                    }
+
+                    // Update total harga
+                    $booking->update(['total_harga' => $booking->total_harga + $equipmentTotal]);
+                }
+
+                $bookings[] = $booking;
+            }
+
+            $this->command->info('✅ ' . count($bookings) . ' Bookings created');
+        }
 
         // ========================
         // 5. GALLERIES
