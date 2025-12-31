@@ -36,11 +36,22 @@ WORKDIR /var/www/html
 # Copy composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+# Copy composer files first for better caching
+COPY composer.json composer.lock ./
+
+# Install dependencies with platform requirements check disabled
+RUN composer install \
+    --no-dev \
+    --no-scripts \
+    --no-autoloader \
+    --prefer-dist \
+    --ignore-platform-reqs
+
 # Copy application files
 COPY . .
 
-# Install dependencies
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Complete composer installation
+RUN composer dump-autoload --optimize --no-dev
 
 # Set Apache document root to Laravel's public directory
 ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
@@ -56,9 +67,6 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html/storage \
     && chmod -R 755 /var/www/html/bootstrap/cache
-
-# Generate application key if not exists
-RUN php artisan config:cache || true
 
 EXPOSE 80
 
