@@ -5,6 +5,13 @@ set -e
 echo "Configuring Nginx to listen on port ${PORT:-80}..."
 sed -i "s/listen 8080;/listen ${PORT:-80};/g" /etc/nginx/sites-available/default
 
+# DEBUG: Check DB Connection
+echo "--- DEBUG INFO ---"
+echo "DB_CONNECTION env var is: '${DB_CONNECTION}'"
+echo "Checking Laravel Config..."
+php artisan about | grep "Database" || true
+echo "------------------"
+
 # Ensure storage permissions are correct at runtime
 # This is critical for Laravel 500 errors
 echo "Fixing storage permissions..."
