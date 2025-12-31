@@ -24,6 +24,11 @@ php artisan view:cache
 echo "Running migrations..."
 php artisan migrate --force || echo "WARNING: Migration failed! Check logs."
 
+# Run Seeders (Only if database is empty - but for now force it to ensure Admin exists)
+# Using updateOrCreate in seeder prevents duplicates
+echo "Seeding database..."
+php artisan db:seed --force || echo "WARNING: Seeding failed!"
+
 # Start Supervisor (which starts Nginx + PHP-FPM)
 echo "Starting Supervisor..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
