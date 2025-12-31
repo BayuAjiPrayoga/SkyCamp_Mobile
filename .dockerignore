@@ -1,0 +1,49 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Environment
+.env
+.env.backup
+.env.production
+
+# IDE
+.idea
+.vscode
+.phpactor.json
+.fleet
+.nova
+.zed
+
+# Dependencies
+/node_modules
+/vendor
+
+# Build
+/public/build
+/public/hot
+/public/storage
+
+# Storage
+/storage/*.key
+/storage/pail
+
+# Testing
+.phpunit.result.cache
+/.phpunit.cache
+/tests
+
+# Mobile projects (excluded from backend)
+/arkanta_skycamp
+/skycamp_mobile
+/skycamp
+
+# Misc
+*.log
+.DS_Store
+Thumbs.db
+/auth.json
+Homestead.json
+Homestead.yaml
+README.md
