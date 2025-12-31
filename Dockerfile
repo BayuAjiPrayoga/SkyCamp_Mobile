@@ -57,8 +57,9 @@ RUN composer dump-autoload --optimize --no-dev
 COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
 COPY docker/run.sh /usr/local/bin/run.sh
 
-# Set permissions
+# Set permissions and fix Windows line endings (CRLF -> LF)
 RUN chmod +x /usr/local/bin/run.sh \
+    && sed -i 's/\r$//' /usr/local/bin/run.sh \
     && chown -R www-data:www-data /var/www/html \
     && chmod -R 775 /var/www/html/storage \
     && chmod -R 775 /var/www/html/bootstrap/cache
