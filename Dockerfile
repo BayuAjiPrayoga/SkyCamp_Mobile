@@ -27,8 +27,11 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     mbstring \
     bcmath
 
-# Enable Apache mod_rewrite for Laravel
-RUN a2enmod rewrite
+# Enable Apache mod_rewrite for Laravel and fix MPM conflicts
+RUN a2enmod rewrite \
+    && a2dismod mpm_event || true \
+    && a2dismod mpm_worker || true \
+    && a2enmod mpm_prefork
 
 # Set working directory
 WORKDIR /var/www/html
