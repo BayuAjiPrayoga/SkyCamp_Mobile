@@ -22,6 +22,7 @@ class GaleriController extends Controller
 
         $photos = match ($status) {
             'approved' => $this->galleryService->getApprovedPhotos(),
+            'rejected' => $this->galleryService->getRejectedPhotos(),
             default => $this->galleryService->getPendingPhotos(),
         };
 

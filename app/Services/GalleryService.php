@@ -37,6 +37,17 @@ class GalleryService
     }
 
     /**
+     * Get rejected photos for display
+     */
+    public function getRejectedPhotos(): LengthAwarePaginator
+    {
+        return Gallery::where('status', 'rejected')
+            ->with('user')
+            ->latest()
+            ->paginate(15);
+    }
+
+    /**
      * Approve a photo
      */
     public function approvePhoto(int $photoId): bool
