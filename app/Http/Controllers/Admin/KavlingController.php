@@ -25,6 +25,13 @@ class KavlingController extends Controller
         $kavlings = Kavling::query()
             ->when($request->search, fn($q, $v) => $q->where('nama', 'like', "%{$v}%"))
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
+            ->withExists([
+                'bookings as is_occupied' => function ($q) {
+                    $q->whereIn('status', ['pending', 'waiting_confirmation', 'confirmed'])
+                        ->whereDate('tanggal_check_in', '<=', now())
+                        ->whereDate('tanggal_check_out', '>=', now());
+                }
+            ])
             ->latest()
             ->paginate(10);
 

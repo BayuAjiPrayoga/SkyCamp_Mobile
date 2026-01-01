@@ -62,7 +62,8 @@
                     <th>Nama</th>
                     <th>Kapasitas</th>
                     <th>Harga/Malam</th>
-                    <th>Status</th>
+                    <th>Status Unit</th>
+                    <th>Status Hari Ini</th>
                     <th>Aksi</th>
                 </tr>
             </thead>
@@ -80,6 +81,19 @@
                                 <x-ui.badge variant="error">🔴 Penuh</x-ui.badge>
                             @else
                                 <x-ui.badge variant="warning">🟡 Maintenance</x-ui.badge>
+                            @endif
+                        </td>
+                        <td>
+                            @if($kavling->is_occupied)
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    ⛺ Terisi
+                                </span>
+                            @else
+                                <span
+                                    class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    ✅ Kosong
+                                </span>
                             @endif
                         </td>
                         <td>

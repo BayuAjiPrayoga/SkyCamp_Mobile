@@ -25,6 +25,15 @@ class PeralatanController extends Controller
             ->when($request->search, fn($q, $v) => $q->where('nama', 'like', "%{$v}%"))
             ->when($request->kategori, fn($q, $v) => $q->where('kategori', $v))
             ->when($request->kondisi, fn($q, $v) => $q->where('kondisi', $v))
+            ->withSum([
+                'bookingItems' => function ($q) {
+                    $q->whereHas('booking', function ($b) {
+                        $b->whereIn('status', ['pending', 'waiting_confirmation', 'confirmed'])
+                            ->whereDate('tanggal_check_in', '<=', now())
+                            ->whereDate('tanggal_check_out', '>=', now());
+                    });
+                }
+            ], 'jumlah')
             ->orderBy('kategori')
             ->orderBy('nama')
             ->paginate(10);
