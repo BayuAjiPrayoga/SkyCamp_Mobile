@@ -69,5 +69,22 @@ class GaleriController extends Controller
         $request->validate(['ids' => 'required|array']);
         $count = $this->galleryService->bulkReject($request->ids);
         return back()->with('success', "{$count} foto berhasil ditolak.");
+        /**
+     * Delete a gallery photo permanently
+     */
+    public function destroy(int $id)
+    {
+        $this->galleryService->deletePhoto($id);
+        return back()->with('success', 'Foto berhasil dihapus permanen.');
+    }
+
+    /**
+     * Bulk delete photos permanently
+     */
+    public function bulkDestroy(Request $request)
+    {
+        $request->validate(['ids' => 'required|array']);
+        $count = $this->galleryService->bulkDelete($request->ids);
+        return back()->with('success', "{$count} foto berhasil dihapus permanen.");
     }
 }

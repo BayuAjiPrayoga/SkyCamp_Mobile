@@ -108,6 +108,22 @@ class GalleryService
     }
 
     /**
+     * Delete a photo permanently
+     */
+    public function deletePhoto(int $photoId): bool
+    {
+        $photo = $this->galleryRepository->find($photoId);
+        if ($photo) {
+            // Delete file from storage
+            if ($photo->image_path && \Illuminate\Support\Facades\Storage::disk('public')->exists($photo->image_path)) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($photo->image_path);
+            }
+            return $this->galleryRepository->delete($photoId);
+        }
+        return false;
+    }
+
+    /**
      * Bulk reject photos
      */
     public function bulkReject(array $photoIds): int
@@ -115,6 +131,20 @@ class GalleryService
         $count = 0;
         foreach ($photoIds as $id) {
             if ($this->galleryRepository->reject($id)) {
+                $count++;
+            }
+        }
+        return $count;
+    }
+
+    /**
+     * Bulk delete photos permanently
+     */
+    public function bulkDelete(array $photoIds): int
+    {
+        $count = 0;
+        foreach ($photoIds as $id) {
+            if ($this->deletePhoto($id)) {
                 $count++;
             }
         }

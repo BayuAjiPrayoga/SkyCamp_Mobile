@@ -46,8 +46,12 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
 
     // Galeri
     Route::get('/galeri', [GaleriController::class, 'index'])->name('galeri.index');
+    Route::post('/galeri/bulk-approve', [GaleriController::class, 'bulkApprove'])->name('galeri.bulk-approve');
+    Route::post('/galeri/bulk-reject', [GaleriController::class, 'bulkReject'])->name('galeri.bulk-reject');
+    Route::post('/galeri/bulk-destroy', [GaleriController::class, 'bulkDestroy'])->name('galeri.bulk-destroy');
     Route::post('/galeri/{gallery}/approve', [GaleriController::class, 'approve'])->name('galeri.approve');
     Route::post('/galeri/{gallery}/reject', [GaleriController::class, 'reject'])->name('galeri.reject');
+    Route::delete('/galeri/{gallery}', [GaleriController::class, 'destroy'])->name('galeri.destroy');
 
     // Laporan
     Route::get('/laporan', [LaporanController::class, 'index'])->name('laporan.index');

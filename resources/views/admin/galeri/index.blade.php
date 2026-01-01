@@ -48,13 +48,20 @@
                     </svg>
                     Approve Selected
                 </x-ui.button>
-                <x-ui.button variant="ghost" size="sm" class="text-red-600" disabled id="btn-reject-selected"
+                <x-ui.button variant="ghost" size="sm" class="text-orange-600" disabled id="btn-reject-selected"
                     onclick="submitBulkAction('reject')">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M6 18L18 6M6 6l12 12" />
                     </svg>
                     Reject Selected
+                </x-ui.button>
+                <x-ui.button variant="danger" size="sm" disabled id="btn-delete-selected"
+                    onclick="submitBulkAction('destroy')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete Selected
                 </x-ui.button>
             </div>
         </div>
@@ -87,14 +94,27 @@
                     <form action="{{ route('admin.galeri.reject', $photo->id) }}" method="POST" class="inline">
                         @csrf
                         <button type="submit"
-                            class="w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg flex items-center justify-center shadow"
-                            title="Reject">
+                            class="w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-lg flex items-center justify-center shadow"
+                            title="Reject/Soft Delete">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </form>
+                    <form action="{{ route('admin.galeri.destroy', $photo->id) }}" method="POST" class="inline"
+                        onsubmit="return confirm('Hapus permanen foto ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit"
+                            class="w-8 h-8 bg-red-600 hover:bg-red-700 text-white rounded-lg flex items-center justify-center shadow"
+                            title="Delete Permanently">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    </form>
+
                 </div>
                 <!-- Checkbox -->
                 <div class="absolute top-2 left-2">
@@ -164,15 +184,16 @@
     <script>
         let currentPhotoId = null;
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             const selectAll = document.getElementById('select-all');
             const checkboxes = document.querySelectorAll('.gallery-checkbox');
             const btnApprove = document.getElementById('btn-approve-selected');
             const btnReject = document.getElementById('btn-reject-selected');
+            const btnDelete = document.getElementById('btn-delete-selected');
 
             // Handle Select All
             if (selectAll) {
-                selectAll.addEventListener('change', function() {
+                selectAll.addEventListener('change', function () {
                     checkboxes.forEach(cb => cb.checked = selectAll.checked);
                     updateButtons();
                 });
@@ -180,7 +201,7 @@
 
             // Handle Individual Checkbox
             checkboxes.forEach(cb => {
-                cb.addEventListener('change', function() {
+                cb.addEventListener('change', function () {
                     updateButtons();
                     if (selectAll) {
                         selectAll.checked = [...checkboxes].every(c => c.checked);
@@ -194,10 +215,11 @@
 
                 if (btnApprove) btnApprove.disabled = !hasSelection;
                 if (btnReject) btnReject.disabled = !hasSelection;
+                if (btnDelete) btnDelete.disabled = !hasSelection;
             }
 
             // Expose to window for inline onclicks
-            window.submitBulkAction = function(action) {
+            window.submitBulkAction = function (action) {
                 const selectedIds = [...checkboxes]
                     .filter(c => c.checked)
                     .map(c => c.value);
