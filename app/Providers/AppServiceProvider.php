@@ -23,6 +23,19 @@ class AppServiceProvider extends ServiceProvider
     {
         if (config('app.env') === 'production') {
             URL::forceScheme('https');
+
+            // Auto-create storage link for Railway's ephemeral filesystem
+            $publicStoragePath = public_path('storage');
+            $storagePath = storage_path('app/public');
+
+            if (!file_exists($publicStoragePath) && file_exists($storagePath)) {
+                try {
+                    symlink($storagePath, $publicStoragePath);
+                } catch (\Exception $e) {
+                    // Symlink failed, try copy approach or log error
+                    \Log::warning('Could not create storage symlink: ' . $e->getMessage());
+                }
+            }
         }
     }
 }
