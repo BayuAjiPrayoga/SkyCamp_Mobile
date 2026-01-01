@@ -9,7 +9,7 @@ use Illuminate\Http\Client\Response;
 
 class WeatherService
 {
-    private string $apiKey;
+    private ?string $apiKey;
     private string $baseUrl = 'https://api.openweathermap.org/data/2.5/weather';
 
     // Gunung Luhur coordinates (from: https://maps.app.goo.gl/kxvHhMJSeciYF26y9)
@@ -19,7 +19,7 @@ class WeatherService
 
     public function __construct()
     {
-        $this->apiKey = config('services.openweather.key', '');
+        $this->apiKey = config('services.openweather.key');
     }
 
     /**
