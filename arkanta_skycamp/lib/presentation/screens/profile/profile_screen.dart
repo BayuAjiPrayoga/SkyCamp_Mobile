@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
@@ -97,6 +99,136 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         );
       }
     }
+    }
+  }
+
+  Future<void> _handleAvatarUpload() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      // Show loading
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mengupload foto...')),
+      );
+
+      final result = await ref.read(authProvider.notifier).updateAvatar(pickedFile.path);
+
+      if (!mounted) return;
+
+      if (result.isSuccess) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foto profil berhasil diperbarui!'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(result.message ?? 'Gagal upload foto'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showChangePasswordDialog() {
+    final currentPassController = TextEditingController();
+    final newPassController = TextEditingController();
+    final confirmPassController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Ganti Password'),
+        content: Form(
+          key: formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CustomTextField(
+                controller: currentPassController,
+                label: 'Password Saat Ini',
+                isPassword: true,
+                validator: (v) => v!.isEmpty ? 'Wajib diisi' : null,
+              ),
+              const SizedBox(height: 12),
+              CustomTextField(
+                controller: newPassController,
+                label: 'Password Baru',
+                isPassword: true,
+                validator: (v) => v!.length < 8 ? 'Min. 8 karakter' : null,
+              ),
+              const SizedBox(height: 12),
+              CustomTextField(
+                controller: confirmPassController,
+                label: 'Konfirmasi Password',
+                isPassword: true,
+                validator: (v) {
+                  if (v != newPassController.text) return 'Password tidak sama';
+                  return null;
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (formKey.currentState!.validate()) {
+                final nav = Navigator.of(context);
+                final messenger = ScaffoldMessenger.of(context);
+                
+                // Show local loading or disable button (simplified here)
+                nav.pop(); // Close dialog first
+
+                final result = await ref.read(authProvider.notifier).changePassword(
+                  currentPassword: currentPassController.text,
+                  newPassword: newPassController.text,
+                  confirmPassword: confirmPassController.text,
+                );
+
+                if (result.isSuccess) {
+                  messenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('Password berhasil diubah!'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+                } else {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(result.message ?? 'Gagal mengubah password'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
+            },
+            child: const Text('Simpan'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _handleHelp() async {
+    final uri = Uri.parse('https://wa.me/6281234567890?text=Halo%20Admin%20LuhurCamp,%20saya%20butuh%20bantuan');
+    if (!await launchUrl(uri)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka WhatsApp')),
+        );
+      }
+    }
   }
 
   @override
@@ -136,20 +268,24 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       ),
                     ),
                   ),
-                  if (_isEditing)
+                    ),
+                  if (_isEditing || true) // Always show camera icon
                     Positioned(
                       bottom: 0,
                       right: 0,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
-                          color: Colors.white,
-                          size: 20,
+                      child: GestureDetector(
+                        onTap: _handleAvatarUpload,
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: const BoxDecoration(
+                            color: AppColors.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ),
@@ -216,13 +352,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               onTap: () => context.push('/gallery'),
             ),
             _MenuItem(
+              icon: Icons.lock_outline,
+              title: 'Ganti Password',
+              onTap: _showChangePasswordDialog,
+            ),
+            _MenuItem(
               icon: Icons.help_outline,
-              title: 'Bantuan',
-              onTap: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Coming soon!')),
-                );
-              },
+              title: 'Bantuan (WhatsApp)',
+              onTap: _handleHelp,
             ),
             _MenuItem(
               icon: Icons.info_outline,

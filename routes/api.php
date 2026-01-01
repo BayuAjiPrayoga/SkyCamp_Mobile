@@ -34,6 +34,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::get('/user', [AuthController::class, 'user']);
         Route::put('/user', [AuthController::class, 'updateProfile']);
+        Route::post('/user/avatar', [AuthController::class, 'updateAvatar']);
+        Route::post('/user/change-password', [AuthController::class, 'changePassword']);
     });
 
     // ========================

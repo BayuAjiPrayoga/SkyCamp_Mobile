@@ -94,6 +94,9 @@ class AuthController extends Controller
     /**
      * Update user profile
      */
+    /**
+     * Update user profile
+     */
     public function updateProfile(Request $request)
     {
         $user = $request->user();
@@ -101,13 +104,7 @@ class AuthController extends Controller
         $request->validate([
             'name' => 'sometimes|string|max:255',
             'phone' => 'nullable|string|max:20',
-            'avatar' => 'nullable|image|max:2048',
         ]);
-
-        if ($request->hasFile('avatar')) {
-            $path = $request->file('avatar')->store('avatars', 'public');
-            $user->avatar = $path;
-        }
 
         $user->fill($request->only(['name', 'phone']));
         $user->save();
@@ -116,6 +113,61 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Profile updated successfully',
             'data' => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Update user avatar
+     */
+    public function updateAvatar(Request $request)
+    {
+        $request->validate([
+            'avatar' => 'required|image|max:2048',
+        ]);
+
+        $user = $request->user();
+
+        if ($request->hasFile('avatar')) {
+            // Delete old avatar if exists (optional logic)
+            // if ($user->avatar) { ... }
+
+            $path = $request->file('avatar')->store('avatars', 'public');
+            $user->avatar = $path;
+            $user->save();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Avatar updated successfully',
+            'data' => new UserResource($user),
+        ]);
+    }
+
+    /**
+     * Change password
+     */
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => 'required',
+            'password' => 'required|min:8|confirmed',
+        ]);
+
+        $user = $request->user();
+
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Password saat ini salah',
+            ], 422);
+        }
+
+        $user->password = Hash::make($request->password);
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Password berhasil diubah',
         ]);
     }
 }

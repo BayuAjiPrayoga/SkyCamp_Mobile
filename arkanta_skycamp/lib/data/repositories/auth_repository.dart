@@ -142,6 +142,63 @@ class AuthRepository {
       return UpdateProfileResult.error(message: e.toString());
     }
   }
+  }
+
+  Future<AuthResult> updateAvatar(String imagePath) async {
+    try {
+      final formData = FormData.fromMap({
+        'avatar': await MultipartFile.fromFile(imagePath),
+      });
+
+      final response = await _apiClient.postFormData(
+        '${ApiConfig.baseUrl}/user/avatar',
+        formData,
+      );
+
+      if (response.statusCode == 200) {
+        final userData = response.data['data'] ?? response.data;
+        final user = User.fromJson(userData);
+        return AuthResult.success(user: user, token: ''); // Token not needed here
+      }
+
+      return AuthResult.error(message: 'Update avatar failed');
+    } on DioException catch (e) {
+      return AuthResult.error(
+        message: e.response?.data['message'] ?? 'Network error',
+      );
+    } catch (e) {
+      return AuthResult.error(message: e.toString());
+    }
+  }
+
+  Future<AuthResult> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    try {
+      final response = await _apiClient.post(
+        '${ApiConfig.baseUrl}/user/change-password',
+        data: {
+          'current_password': currentPassword,
+          'password': newPassword,
+          'password_confirmation': confirmPassword,
+        },
+      );
+
+      if (response.statusCode == 200) {
+        return AuthResult.success(user: User.empty(), token: ''); // Dummy user
+      }
+
+      return AuthResult.error(message: 'Change password failed');
+    } on DioException catch (e) {
+      return AuthResult.error(
+        message: e.response?.data['message'] ?? 'Network error',
+      );
+    } catch (e) {
+      return AuthResult.error(message: e.toString());
+    }
+  }
 }
 
 class AuthResult {

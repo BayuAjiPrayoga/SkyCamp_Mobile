@@ -92,9 +92,12 @@ final routerProvider = Provider<GoRouter>((ref) {
                 routes: [
                   GoRoute(
                     path: ':id',
-                    builder: (context, state) {
+                    pageBuilder: (context, state) {
                       final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-                      return KavlingDetailScreen(kavlingId: id);
+                      return _buildPageWithAnimation(
+                        KavlingDetailScreen(kavlingId: id),
+                        state,
+                      );
                     },
                   ),
                 ],
@@ -190,18 +193,11 @@ Page<dynamic> _buildPageWithAnimation(Widget child, GoRouterState state) {
     key: state.pageKey,
     child: child,
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
-      const begin = Offset(1.0, 0.0);
-      const end = Offset.zero;
-      const curve = Curves.easeOutCubic;
-      
-      var tween = Tween(begin: begin, end: end).chain(CurveTween(curve: curve));
-      var offsetAnimation = animation.drive(tween);
-
-      return SlideTransition(
-        position: offsetAnimation,
+      return FadeTransition(
+        opacity: CurveTween(curve: Curves.easeInOut).animate(animation),
         child: child,
       );
     },
-    transitionDuration: const Duration(milliseconds: 300),
+    transitionDuration: const Duration(milliseconds: 250),
   );
 }

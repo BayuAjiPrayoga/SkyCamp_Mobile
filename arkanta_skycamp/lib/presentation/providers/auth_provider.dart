@@ -131,6 +131,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
     return result;
   }
 
+  Future<AuthResult> updateAvatar(String imagePath) async {
+    // Note: We don't set global loading here to avoid full screen loader
+    // Local loading state should be handled by the UI
+    final result = await _repository.updateAvatar(imagePath);
+
+    if (result.isSuccess && result.user != null) {
+      state = state.copyWith(user: result.user);
+    }
+
+    return result;
+  }
+
+  Future<AuthResult> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    return await _repository.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+      confirmPassword: confirmPassword,
+    );
+  }
+
   void clearError() {
     state = state.copyWith(
       status: state.user != null 
