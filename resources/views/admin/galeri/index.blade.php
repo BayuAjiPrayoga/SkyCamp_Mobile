@@ -56,7 +56,7 @@
         @forelse($photos ?? [] as $photo)
             <div class="group relative bg-white rounded-xl shadow overflow-hidden">
                 <div class="aspect-square bg-gray-100 cursor-pointer" onclick='previewPhoto(@json($photo))'>
-                    <img src="{{ Storage::url($photo->path) }}"
+                    <img src="{{ Storage::url($photo->image_path) }}"
                         class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="">
                 </div>
                 <div class="p-3">
@@ -158,7 +158,7 @@
             currentPhotoId = photo.id;
 
             // Populate Modal
-            document.getElementById('preview-image').src = '/storage/' + photo.path;
+            document.getElementById('preview-image').src = '/storage/' + photo.image_path;
             document.getElementById('preview-user').textContent = '@' + (photo.user ? photo.user.name : 'Unknown');
 
             // Format date (simple approach or use library if available, here just raw string or simple JS format)
