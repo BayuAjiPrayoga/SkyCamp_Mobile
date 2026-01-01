@@ -122,7 +122,10 @@ class BookingService
         $path = $file->store('payment-proofs', 'public');
 
         $booking = $this->bookingRepository->findOrFail($bookingId);
-        $booking->update(['bukti_pembayaran' => $path]);
+        $booking->update([
+            'bukti_pembayaran' => $path,
+            'status' => 'waiting_confirmation', // Update status after payment upload
+        ]);
 
         return $booking->fresh();
     }
