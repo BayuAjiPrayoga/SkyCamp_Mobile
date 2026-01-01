@@ -62,13 +62,20 @@ class BookingController extends Controller
             ], 422);
         }
 
-        $booking = $this->bookingService->createBooking($data, $request->user()->id);
+        try {
+            $booking = $this->bookingService->createBooking($data, $request->user()->id);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Booking berhasil dibuat',
-            'data' => new BookingResource($booking),
-        ], 201);
+            return response()->json([
+                'success' => true,
+                'message' => 'Booking berhasil dibuat',
+                'data' => new BookingResource($booking),
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Server Error: ' . $e->getMessage() . ' in ' . $e->getFile() . ':' . $e->getLine(),
+            ], 500);
+        }
     }
 
     /**
