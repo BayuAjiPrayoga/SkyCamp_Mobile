@@ -47,6 +47,66 @@
     <div class="space-y-4">
         @forelse($announcements ?? [] as $announcement)
             <!-- Announcement Card -->
+            <x-ui.card :padding="false">
+                <div class="p-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-4 flex-1">
+                            <!-- Type Icon -->
+                            <div class="w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0
+                                @if($announcement->type === 'info') bg-blue-100 text-blue-600
+                                @elseif($announcement->type === 'warning') bg-yellow-100 text-yellow-600
+                                @else bg-green-100 text-green-600
+                                @endif">
+                                @if($announcement->type === 'info')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                    </svg>
+                                @elseif($announcement->type === 'warning')
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+                                    </svg>
+                                @else
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z"/>
+                                    </svg>
+                                @endif
+                            </div>
+                            
+                            <!-- Content -->
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-1">
+                                    <h3 class="font-semibold text-gray-900">{{ $announcement->title }}</h3>
+                                    @if($announcement->is_active)
+                                        <x-ui.badge variant="success">Aktif</x-ui.badge>
+                                    @else
+                                        <x-ui.badge variant="neutral">Tidak Aktif</x-ui.badge>
+                                    @endif
+                                </div>
+                                <p class="text-sm text-gray-600 mb-2">{{ $announcement->content }}</p>
+                                <p class="text-xs text-gray-400">Dibuat: {{ $announcement->created_at->format('d M Y') }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="flex items-center gap-2">
+                            <button class="btn btn-ghost btn-sm" onclick='editPengumuman(@json($announcement))' title="Edit">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </button>
+                            <form action="{{ route('admin.pengumuman.destroy', $announcement) }}" method="POST" class="inline" onsubmit="return confirm('Hapus pengumuman ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-ghost btn-sm text-red-600 hover:bg-red-50" title="Hapus">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </x-ui.card>
         @empty
             <!-- Demo Data -->
             @foreach([
