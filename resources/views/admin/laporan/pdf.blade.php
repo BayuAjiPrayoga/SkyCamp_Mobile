@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>Laporan Pendapatan - {{ $monthName }} {{ $year }}</title>
+    <title>Laporan Pendapatan - {{ $rangeString }}</title>
     <style>
         body {
             font-family: 'DejaVu Sans', sans-serif;
@@ -105,7 +105,7 @@
 <body>
     <div class="header">
         <h1>🏔️ LuhurCamp</h1>
-        <p>Laporan Pendapatan - {{ $monthName }} {{ $year }}</p>
+        <p>Laporan Pendapatan - {{ $rangeString }}</p>
     </div>
 
     <div class="section-title">Rincian Pendapatan Mingguan</div>

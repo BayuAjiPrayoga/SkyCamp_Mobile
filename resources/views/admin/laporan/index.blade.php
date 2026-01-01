@@ -24,33 +24,35 @@
             <form action="{{ route('admin.laporan.pdf') }}" method="GET">
                 <!-- Period Selector -->
                 <div class="grid grid-cols-2 gap-4 mb-6">
-                    <x-ui.select label="Bulan" name="month" :value="$month ?? now()->month" :options="[
-        '1' => 'Januari',
-        '2' => 'Februari',
-        '3' => 'Maret',
-        '4' => 'April',
-        '5' => 'Mei',
-        '6' => 'Juni',
-        '7' => 'Juli',
-        '8' => 'Agustus',
-        '9' => 'September',
-        '10' => 'Oktober',
-        '11' => 'November',
-        '12' => 'Desember',
-    ]" />
-                    <x-ui.select label="Tahun" name="year" :value="$year ?? now()->year" :options="[
-        '2025' => '2025',
-        '2024' => '2024',
-        '2023' => '2023',
-    ]" />
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dari Tanggal</label>
+                        <input type="date" name="start_date"
+                            value="{{ $startDate ?? now()->startOfMonth()->format('Y-m-d') }}"
+                            class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sampai Tanggal</label>
+                        <input type="date" name="end_date"
+                            value="{{ $endDate ?? now()->endOfMonth()->format('Y-m-d') }}"
+                            class="form-input w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500">
+                    </div>
+                </div>
+
+                <div class="flex justify-end mb-6">
+                    <x-ui.button type="button" variant="outline" size="sm"
+                        onclick="this.closest('form').action='{{ route('admin.laporan.index') }}'; this.closest('form').submit();"
+                        class="mr-2">
+                        Terapkan Filter
+                    </x-ui.button>
                 </div>
 
                 <!-- Preview -->
                 <div class="bg-gray-50 rounded-lg p-4 mb-6">
                     @php
-                        $monthNames = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-                        $currentMonthName = $monthNames[($month ?? now()->month) - 1] ?? 'Desember';
-                        $currentYear = $year ?? now()->year;
+                        $start = \Carbon\Carbon::parse($startDate ?? now()->startOfMonth());
+                        $end = \Carbon\Carbon::parse($endDate ?? now()->endOfMonth());
+                        $rangeString = $start->translatedFormat('d M Y') . ' - ' . $end->translatedFormat('d M Y');
+                        
                         $totalRevenue = isset($weeklyData) ? collect($weeklyData)->sum('revenue') : 0;
                         $totalBookings = isset($weeklyData) ? collect($weeklyData)->sum('bookings') : 0;
                     @endphp
@@ -58,7 +60,7 @@
                     <div class="flex items-center justify-between mb-3">
                         <h4 class="font-semibold text-gray-900">Preview Pendapatan</h4>
                         <span class="text-xs bg-primary-100 text-primary-700 px-2 py-1 rounded-full font-medium">
-                            {{ $currentMonthName }} {{ $currentYear }}
+                            {{ $rangeString }}
                         </span>
                     </div>
 
@@ -109,8 +111,8 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                                     d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
-                            <p class="text-gray-500 text-sm">Belum ada data booking untuk {{ $currentMonthName }}
-                                {{ $currentYear }}
+                            <p class="text-gray-500 text-sm">Belum ada data booking untuk periode <br>
+                                {{ $rangeString }}
                             </p>
                             <p class="text-gray-400 text-xs mt-1">Data akan muncul setelah ada booking yang dikonfirmasi</p>
                         </div>
