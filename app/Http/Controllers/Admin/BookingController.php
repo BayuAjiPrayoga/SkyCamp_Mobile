@@ -56,4 +56,20 @@ class BookingController extends Controller
             $filename
         );
     }
+
+    /**
+     * Mark booking as checked in
+     */
+    public function checkIn(Booking $booking)
+    {
+        if (!in_array($booking->status, ['confirmed', 'paid'])) {
+            return back()->with('error', 'Booking tidak dalam status yang valid untuk Check-in.');
+        }
+
+        $booking->update([
+            'status' => 'checked_in',
+        ]);
+
+        return back()->with('success', 'Berhasil Check-in tamu.');
+    }
 }

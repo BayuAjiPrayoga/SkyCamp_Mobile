@@ -40,6 +40,7 @@ Route::prefix('admin')->name('admin.')->middleware(['auth'])->group(function () 
     // Transaksi
     Route::get('/booking/export', [BookingController::class, 'export'])->name('booking.export');
     Route::resource('booking', BookingController::class)->only(['index', 'show']);
+    Route::post('/booking/{booking}/check-in', [BookingController::class, 'checkIn'])->name('booking.check-in');
     Route::get('/verifikasi', [VerifikasiController::class, 'index'])->name('verifikasi.index');
     Route::post('/verifikasi/{booking}/confirm', [VerifikasiController::class, 'confirm'])->name('verifikasi.confirm');
     Route::post('/verifikasi/{booking}/reject', [VerifikasiController::class, 'reject'])->name('verifikasi.reject');
