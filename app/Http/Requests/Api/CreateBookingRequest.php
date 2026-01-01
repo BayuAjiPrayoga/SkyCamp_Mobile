@@ -24,7 +24,7 @@ class CreateBookingRequest extends FormRequest
             'tanggal_check_in' => ['required', 'date', 'after_or_equal:today'],
             'tanggal_check_out' => ['required', 'date', 'after:tanggal_check_in'],
             'items' => ['nullable', 'array'],
-            'items.*.peralatan_id' => ['required_with:items', 'exists:peralatans,id'],
+            'items.*.peralatan_id' => ['required_with:items', 'exists:peralatan,id'],
             'items.*.qty' => ['required_with:items', 'integer', 'min:1'],
         ];
     }
