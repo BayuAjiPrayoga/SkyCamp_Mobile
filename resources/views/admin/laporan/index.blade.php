@@ -52,7 +52,7 @@
                         $start = \Carbon\Carbon::parse($startDate ?? now()->startOfMonth());
                         $end = \Carbon\Carbon::parse($endDate ?? now()->endOfMonth());
                         $rangeString = $start->translatedFormat('d M Y') . ' - ' . $end->translatedFormat('d M Y');
-                        
+
                         $totalRevenue = isset($weeklyData) ? collect($weeklyData)->sum('revenue') : 0;
                         $totalBookings = isset($weeklyData) ? collect($weeklyData)->sum('bookings') : 0;
                     @endphp
@@ -96,7 +96,7 @@
                                     <div>
                                         <span class="font-bold text-gray-900">TOTAL PENDAPATAN</span>
                                         <p class="text-xs text-gray-500">{{ $totalBookings }} booking di
-                                            {{ $currentMonthName }}
+                                            {{ $rangeString }}
                                         </p>
                                     </div>
                                     <span class="text-xl font-bold text-primary-600">Rp
