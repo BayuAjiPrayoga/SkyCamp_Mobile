@@ -72,4 +72,49 @@ class BookingController extends Controller
 
         return back()->with('success', 'Berhasil Check-in tamu.');
     }
+
+    public function scanPage()
+    {
+        return view('admin.booking.scan');
+    }
+
+    public function scanCheckIn(Request $request)
+    {
+        $request->validate([
+            'code' => 'required|string|exists:bookings,code',
+        ]);
+
+        $booking = Booking::where('code', $request->code)->first();
+
+        if (!$booking) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Booking tidak ditemukan.',
+            ], 404);
+        }
+
+        if ($booking->status === 'checked_in') {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Tamu ini SUDAH Check-in sebelumnya.',
+                'booking' => $booking->load('user', 'kavling')
+            ], 400);
+        }
+
+        if (!in_array($booking->status, ['confirmed', 'paid'])) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Status booking tidak valid (' . ucfirst($booking->status) . ').',
+                'booking' => $booking->load('user', 'kavling')
+            ], 400);
+        }
+
+        $booking->update(['status' => 'checked_in']);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Check-in BERHASIL!',
+            'booking' => $booking->load('user', 'kavling')
+        ]);
+    }
 }
