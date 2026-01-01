@@ -18,15 +18,18 @@
 
     <!-- Tabs -->
     <div class="flex items-center gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
-        <button class="px-4 py-2 text-sm font-medium rounded-md bg-white shadow text-primary-600">
+        <a href="{{ route('admin.galeri.index', ['status' => 'pending']) }}"
+            class="px-4 py-2 text-sm font-medium rounded-md transition {{ request('status', 'pending') == 'pending' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900' }}">
             📋 Pending
-        </button>
-        <button class="px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900">
+        </a>
+        <a href="{{ route('admin.galeri.index', ['status' => 'approved']) }}"
+            class="px-4 py-2 text-sm font-medium rounded-md transition {{ request('status') == 'approved' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900' }}">
             ✅ Approved
-        </button>
-        <button class="px-4 py-2 text-sm font-medium rounded-md text-gray-600 hover:text-gray-900">
+        </a>
+        <a href="{{ route('admin.galeri.index', ['status' => 'rejected']) }}"
+            class="px-4 py-2 text-sm font-medium rounded-md transition {{ request('status') == 'rejected' ? 'bg-white shadow text-primary-600' : 'text-gray-600 hover:text-gray-900' }}">
             ❌ Rejected
-        </button>
+        </a>
     </div>
 
     <!-- Bulk Actions -->
