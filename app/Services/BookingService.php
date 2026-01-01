@@ -67,8 +67,8 @@ class BookingService
             BookingItem::create([
                 'booking_id' => $booking->id,
                 'peralatan_id' => $peralatan->id,
-                'qty' => $item['qty'],
-                'harga_satuan' => $peralatan->harga_sewa,
+                'jumlah' => $item['qty'],
+                'harga_sewa' => $peralatan->harga_sewa,
                 'subtotal' => $peralatan->harga_sewa * $item['qty'],
             ]);
 
