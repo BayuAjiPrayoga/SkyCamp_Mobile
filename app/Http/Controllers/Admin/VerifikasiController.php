@@ -22,7 +22,7 @@ class VerifikasiController extends Controller
     {
         // Directly query with pagination instead of using repository
         $pendingBookings = \App\Models\Booking::with(['user', 'kavling'])
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'waiting_confirmation'])
             ->whereNotNull('bukti_pembayaran')
             ->latest()
             ->paginate(10);
