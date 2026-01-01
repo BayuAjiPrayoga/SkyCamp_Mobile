@@ -211,16 +211,21 @@ class DatabaseSeeder extends Seeder
 
         $galleryStatuses = ['approved', 'approved', 'approved', 'pending', 'rejected'];
 
-        for ($i = 0; $i < 20; $i++) {
-            Gallery::create([
-                'user_id' => $customers[array_rand($customers)]->id,
-                'image_path' => 'galleries/sample-' . ($i + 1) . '.jpg',
-                'caption' => $captions[array_rand($captions)],
-                'status' => $galleryStatuses[array_rand($galleryStatuses)],
-            ]);
-        }
+        // Prevent duplicate galleries on re-seeding
+        if (Gallery::count() > 0) {
+            $this->command->info('⏩ Galleries already exist, skipping gallery generation.');
+        } else {
+            for ($i = 0; $i < 20; $i++) {
+                Gallery::create([
+                    'user_id' => $customers[array_rand($customers)]->id,
+                    'image_path' => 'galleries/sample-' . ($i + 1) . '.jpg',
+                    'caption' => $captions[array_rand($captions)],
+                    'status' => $galleryStatuses[array_rand($galleryStatuses)],
+                ]);
+            }
 
-        $this->command->info('✅ 20 Gallery photos created');
+            $this->command->info('✅ 20 Gallery photos created');
+        }
 
         // ========================
         // 6. ANNOUNCEMENTS

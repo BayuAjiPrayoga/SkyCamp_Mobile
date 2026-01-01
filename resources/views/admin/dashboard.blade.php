@@ -48,12 +48,12 @@
                         <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
                             <div
                                 class="w-10 h-10 bg-accent-100 rounded-full flex items-center justify-center text-accent-600 font-semibold text-sm">
-                                {{ substr($booking->user->name ?? 'U', 0, 1) }}
+                                {{ substr($booking->user?->name ?? 'U', 0, 1) }}
                             </div>
                             <div class="flex-1 min-w-0">
-                                <p class="text-sm font-medium text-gray-900 truncate">{{ $booking->code ?? 'BK-001' }}</p>
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ $booking?->code ?? 'BK-001' }}</p>
                                 <p class="text-xs text-gray-500">Rp
-                                    {{ number_format($booking->total ?? 350000, 0, ',', '.') }}</p>
+                                    {{ number_format($booking?->total_harga ?? 350000, 0, ',', '.') }}</p>
                             </div>
                             <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
