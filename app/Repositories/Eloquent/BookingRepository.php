@@ -31,7 +31,7 @@ class BookingRepository extends BaseRepository implements BookingRepositoryInter
     public function findPendingWithPayment(): Collection
     {
         return $this->query()
-            ->where('status', 'pending')
+            ->whereIn('status', ['pending', 'waiting_confirmation'])
             ->whereNotNull('bukti_pembayaran')
             ->with(['user', 'kavling'])
             ->latest()
