@@ -48,6 +48,24 @@ Route::prefix('v1')->group(function () {
     Route::get('/announcements', [AnnouncementController::class, 'index']);
     Route::get('/weather', [WeatherController::class, 'current']);
 
+    // Debug Endpoint
+    Route::get('/health', function () {
+        try {
+            \Illuminate\Support\Facades\DB::connection()->getPdo();
+            return response()->json([
+                'status' => 'ok',
+                'database' => 'connected',
+                'version' => 'debug-v2-' . now()->timestamp,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'database' => $e->getMessage(),
+                'version' => 'debug-v2-' . now()->timestamp,
+            ], 500);
+        }
+    });
+
     Route::get('/galleries', [GalleryController::class, 'index']);
 
     // ========================
