@@ -27,7 +27,7 @@ class KavlingController extends Controller
             ->when($request->status, fn($q, $v) => $q->where('status', $v))
             ->withExists([
                 'bookings as is_occupied' => function ($q) {
-                    $q->whereIn('status', ['pending', 'waiting_confirmation', 'confirmed'])
+                    $q->whereIn('status', ['pending', 'waiting_confirmation', 'confirmed', 'checked_in'])
                         ->whereDate('tanggal_check_in', '<=', now())
                         ->whereDate('tanggal_check_out', '>=', now());
                 }
