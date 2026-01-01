@@ -208,7 +208,7 @@
                 ]" required />
 
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" name="is_active" id="is_active" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked>
+                    <input type="checkbox" name="is_active" id="is_active" value="1" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked>
                     <label for="is_active" class="text-sm text-gray-700">Aktifkan pengumuman ini</label>
                 </div>
             </div>
@@ -237,7 +237,7 @@
                 ]" required />
 
                 <div class="flex items-center gap-2">
-                    <input type="checkbox" name="is_active" id="edit-is_active" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+                    <input type="checkbox" name="is_active" id="edit-is_active" value="1" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
                     <label for="edit-is_active" class="text-sm text-gray-700">Aktifkan pengumuman ini</label>
                 </div>
             </div>
