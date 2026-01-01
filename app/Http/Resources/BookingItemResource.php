@@ -16,8 +16,8 @@ class BookingItemResource extends JsonResource
             'id' => $this->id,
             'peralatan_id' => $this->peralatan_id,
             'peralatan' => new PeralatanResource($this->whenLoaded('peralatan')),
-            'qty' => $this->qty,
-            'harga_satuan' => $this->harga_satuan,
+            'jumlah' => $this->jumlah,
+            'harga' => $this->harga_sewa,
             'subtotal' => $this->subtotal,
             'subtotal_formatted' => 'Rp ' . number_format($this->subtotal, 0, ',', '.'),
         ];
