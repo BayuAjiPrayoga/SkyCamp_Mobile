@@ -46,6 +46,7 @@
     <!-- Announcements List -->
     <div class="space-y-4">
         @forelse($announcements ?? [] as $announcement)
+            @php /** @var \App\Models\Announcement $announcement */ @endphp
             <!-- Announcement Card -->
             <x-ui.card :padding="false">
                 <div class="p-6">
