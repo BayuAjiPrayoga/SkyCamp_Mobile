@@ -17,11 +17,11 @@ class LaporanController extends Controller
      */
     public function index(Request $request)
     {
-        $month = $request->get('month', now()->month);
-        $year = $request->get('year', now()->year);
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
 
-        // Weekly breakdown for selected month/year
-        $weeklyData = $this->getWeeklyRevenue($month, $year);
+        // Revenue breakdown for selected range
+        $weeklyData = $this->getRevenueData($startDate, $endDate);
 
         // Equipment summary
         $totalItems = Peralatan::count();
@@ -35,8 +35,8 @@ class LaporanController extends Controller
             'goodCondition',
             'needRepair',
             'damaged',
-            'month',
-            'year'
+            'startDate',
+            'endDate'
         ));
     }
 
@@ -45,32 +45,26 @@ class LaporanController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $month = (int) $request->get('month', now()->month);
-        $year = (int) $request->get('year', now()->year);
+        $startDate = $request->get('start_date', now()->startOfMonth()->format('Y-m-d'));
+        $endDate = $request->get('end_date', now()->endOfMonth()->format('Y-m-d'));
 
-        // Validate month and year
-        if ($month < 1 || $month > 12) {
-            $month = now()->month;
-        }
-        if ($year < 2020 || $year > 2030) {
-            $year = now()->year;
-        }
-
-        $weeklyData = $this->getWeeklyRevenue($month, $year);
+        $weeklyData = $this->getRevenueData($startDate, $endDate);
         $totalRevenue = collect($weeklyData)->sum('revenue');
         $totalBookings = collect($weeklyData)->sum('bookings');
 
-        $monthName = \Carbon\Carbon::createFromDate($year, $month, 1)->translatedFormat('F');
+        $rangeString = \Carbon\Carbon::parse($startDate)->translatedFormat('d M Y') . ' - ' . \Carbon\Carbon::parse($endDate)->translatedFormat('d M Y');
 
         $pdf = Pdf::loadView('admin.laporan.pdf', compact(
             'weeklyData',
             'totalRevenue',
             'totalBookings',
-            'monthName',
-            'year'
+            'rangeString',
+            'startDate',
+            'endDate'
         ));
 
-        return $pdf->download("laporan-pendapatan-{$monthName}-{$year}.pdf");
+        $fileName = 'laporan-pendapatan-' . str_replace(' ', '-', $rangeString) . '.pdf';
+        return $pdf->download($fileName);
     }
 
     /**
@@ -82,38 +76,38 @@ class LaporanController extends Controller
     }
 
     /**
-     * Get weekly revenue breakdown (limited to 4 weeks per month)
+     * Get revenue breakdown by weeks/periods within range
      */
-    private function getWeeklyRevenue(int $month, int $year): array
+    private function getRevenueData(string $startDate, string $endDate): array
     {
+        $start = \Carbon\Carbon::parse($startDate)->startOfDay();
+        $end = \Carbon\Carbon::parse($endDate)->endOfDay();
         $weeks = [];
-        $startOfMonth = now()->setYear($year)->setMonth($month)->startOfMonth();
-        $endOfMonth = now()->setYear($year)->setMonth($month)->endOfMonth();
-        $daysInMonth = $endOfMonth->day;
 
-        // Divide month into 4 weeks
-        $weekRanges = [
-            ['start' => 1, 'end' => 7],
-            ['start' => 8, 'end' => 14],
-            ['start' => 15, 'end' => 21],
-            ['start' => 22, 'end' => $daysInMonth],
-        ];
+        $current = $start->copy();
+        $weekCounter = 1;
 
-        foreach ($weekRanges as $index => $range) {
-            $weekStart = $startOfMonth->copy()->setDay($range['start'])->startOfDay();
-            $weekEnd = $startOfMonth->copy()->setDay($range['end'])->endOfDay();
+        while ($current->lte($end)) {
+            // Define chunk: 7 days or until end of range
+            $chunkEnd = $current->copy()->addDays(6)->endOfDay();
+            if ($chunkEnd->gt($end)) {
+                $chunkEnd = $end->copy(); // Cap last chunk at end date
+            }
 
-            $bookings = Booking::whereBetween('created_at', [$weekStart, $weekEnd])
+            $bookings = Booking::whereBetween('created_at', [$current, $chunkEnd])
                 ->where('status', 'confirmed')
                 ->get();
 
             $weeks[] = [
-                'week' => $index + 1,
-                'start' => $weekStart->format('d'),
-                'end' => $weekEnd->format('d'),
+                'week' => $weekCounter,
+                'start' => $current->translatedFormat('d M'),
+                'end' => $chunkEnd->translatedFormat('d M'),
                 'revenue' => $bookings->sum('total_harga'),
                 'bookings' => $bookings->count(),
             ];
+
+            $current->addDays(7);
+            $weekCounter++;
         }
 
         return $weeks;
