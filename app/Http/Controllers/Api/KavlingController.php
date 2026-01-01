@@ -21,22 +21,35 @@ class KavlingController extends Controller
             ->when($request->kapasitas_max, fn($q, $v) => $q->where('kapasitas', '<=', $v))
             ->when($request->harga_max, fn($q, $v) => $q->where('harga_per_malam', '<=', $v));
 
-        // Filter availability if dates are provided
+        // Remove hard filter, instead calculate availability
+        $kavlings = $query->orderBy('nama')->get();
+
+        // Calculate availability for each kavling if dates specific
         if ($request->check_in && $request->check_out) {
-            $query->whereDoesntHave('bookings', function ($q) use ($request) {
-                $q->whereIn('status', ['pending', 'waiting_confirmation', 'confirmed', 'checked_in'])
-                    ->where(function ($dateQ) use ($request) {
-                        $dateQ->whereBetween('tanggal_check_in', [$request->check_in, $request->check_out])
-                            ->orWhereBetween('tanggal_check_out', [$request->check_in, $request->check_out])
-                            ->orWhere(function ($overlapQ) use ($request) {
-                                $overlapQ->where('tanggal_check_in', '<=', $request->check_in)
-                                    ->where('tanggal_check_out', '>=', $request->check_out);
+            $kavlings->each(function ($kavling) use ($request) {
+                $checkIn = $request->check_in;
+                $checkOut = $request->check_out;
+
+                $conflicting = $kavling->bookings()
+                    ->whereIn('status', ['pending', 'waiting_confirmation', 'confirmed', 'checked_in'])
+                    ->where(function ($q) use ($checkIn, $checkOut) {
+                        $q->whereBetween('tanggal_check_in', [$checkIn, $checkOut])
+                            ->orWhereBetween('tanggal_check_out', [$checkIn, $checkOut])
+                            ->orWhere(function ($overlapQ) use ($checkIn, $checkOut) {
+                                $overlapQ->where('tanggal_check_in', '<=', $checkIn)
+                                    ->where('tanggal_check_out', '>=', $checkOut);
                             });
-                    });
+                    })
+                    ->exists();
+
+                $kavling->setAttribute('is_available', !$conflicting);
+            });
+        } else {
+            // Default availability is true if no dates checked
+            $kavlings->each(function ($kavling) {
+                $kavling->setAttribute('is_available', true);
             });
         }
-
-        $kavlings = $query->orderBy('nama')->get();
 
         return response()->json([
             'success' => true,

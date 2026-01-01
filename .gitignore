@@ -24,6 +24,6 @@ Homestead.yaml
 Thumbs.db
 
 # Exclude mobile projects
-/arkanta_skycamp
+
 /skycamp_mobile
 /skycamp
