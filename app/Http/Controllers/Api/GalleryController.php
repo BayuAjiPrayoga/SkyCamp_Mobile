@@ -29,12 +29,22 @@ class GalleryController extends Controller
      */
     public function store(Request $request)
     {
+        \Illuminate\Support\Facades\Log::info('Gallery Upload Request Start', [
+            'user_id' => $request->user()?->id,
+            'has_file' => $request->hasFile('image'),
+            'file_valid' => $request->file('image')?->isValid(),
+            'file_size' => $request->file('image')?->getSize(),
+            'content_length' => $request->header('Content-Length'),
+        ]);
+
         $request->validate([
             'image' => 'required|image|max:10240', // 10MB max
             'caption' => 'nullable|string|max:500',
         ]);
 
         $path = $request->file('image')->store('galleries', 'public');
+
+        \Illuminate\Support\Facades\Log::info('Gallery Upload Success', ['path' => $path]);
 
         $gallery = Gallery::create([
             'user_id' => $request->user()->id,
