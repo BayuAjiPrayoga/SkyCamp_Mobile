@@ -24,4 +24,14 @@ class Kavling extends Model
     {
         return $this->hasMany(Booking::class);
     }
+
+    protected $appends = ['gambar_url'];
+
+    public function getGambarUrlAttribute()
+    {
+        if ($this->gambar) {
+            return asset('storage/' . $this->gambar);
+        }
+        return null;
+    }
 }

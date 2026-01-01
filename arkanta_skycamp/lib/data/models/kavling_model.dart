@@ -55,7 +55,7 @@ class Kavling {
       hargaPerMalam: harga,
       fasilitas: parseFasilitas(json['fasilitas']),
       status: json['status']?.toString() ?? 'tersedia',
-      gambar: json['gambar']?.toString(),
+      gambar: json['gambar_url']?.toString() ?? json['gambar']?.toString(),
       deskripsi: json['deskripsi']?.toString(),
     );
   }
