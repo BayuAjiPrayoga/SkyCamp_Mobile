@@ -205,7 +205,7 @@
                     'info' => 'ℹ️ Informasi',
                     'warning' => '⚠️ Peringatan',
                     'success' => '📢 Promosi',
-                ]" />
+                ]" required />
 
                 <div class="flex items-center gap-2">
                     <input type="checkbox" name="is_active" id="is_active" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" checked>
@@ -234,7 +234,7 @@
                     'info' => 'ℹ️ Informasi',
                     'warning' => '⚠️ Peringatan',
                     'success' => '📢 Promosi',
-                ]" />
+                ]" required />
 
                 <div class="flex items-center gap-2">
                     <input type="checkbox" name="is_active" id="edit-is_active" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
