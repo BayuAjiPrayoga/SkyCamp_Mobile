@@ -69,7 +69,8 @@ class GaleriController extends Controller
         $request->validate(['ids' => 'required|array']);
         $count = $this->galleryService->bulkReject($request->ids);
         return back()->with('success', "{$count} foto berhasil ditolak.");
-        /**
+    }
+    /**
      * Delete a gallery photo permanently
      */
     public function destroy(int $id)
