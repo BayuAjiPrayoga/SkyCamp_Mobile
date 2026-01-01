@@ -35,22 +35,28 @@
     <!-- Bulk Actions -->
     <div class="flex items-center justify-between mb-4">
         <label class="flex items-center gap-2 text-sm cursor-pointer">
-            <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
+            <input type="checkbox" id="select-all"
+                class="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500">
             <span class="text-gray-600">Pilih Semua</span>
         </label>
         <div class="flex items-center gap-2">
-            <x-ui.button variant="outline" size="sm" disabled>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
-                Approve Selected
-            </x-ui.button>
-            <x-ui.button variant="ghost" size="sm" class="text-red-600" disabled>
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Reject Selected
-            </x-ui.button>
+            <div class="flex items-center gap-2">
+                <x-ui.button variant="outline" size="sm" disabled id="btn-approve-selected"
+                    onclick="submitBulkAction('approve')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Approve Selected
+                </x-ui.button>
+                <x-ui.button variant="ghost" size="sm" class="text-red-600" disabled id="btn-reject-selected"
+                    onclick="submitBulkAction('reject')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Reject Selected
+                </x-ui.button>
+            </div>
         </div>
     </div>
 
@@ -93,7 +99,8 @@
                 <!-- Checkbox -->
                 <div class="absolute top-2 left-2">
                     <input type="checkbox"
-                        class="w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-white/80 backdrop-blur">
+                        class="gallery-checkbox w-5 h-5 rounded border-gray-300 text-primary-600 focus:ring-primary-500 bg-white/80 backdrop-blur"
+                        value="{{ $photo->id }}">
                 </div>
             </div>
         @empty
@@ -157,6 +164,72 @@
     <script>
         let currentPhotoId = null;
 
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAll = document.getElementById('select-all');
+            const checkboxes = document.querySelectorAll('.gallery-checkbox');
+            const btnApprove = document.getElementById('btn-approve-selected');
+            const btnReject = document.getElementById('btn-reject-selected');
+
+            // Handle Select All
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes.forEach(cb => cb.checked = selectAll.checked);
+                    updateButtons();
+                });
+            }
+
+            // Handle Individual Checkbox
+            checkboxes.forEach(cb => {
+                cb.addEventListener('change', function() {
+                    updateButtons();
+                    if (selectAll) {
+                        selectAll.checked = [...checkboxes].every(c => c.checked);
+                    }
+                });
+            });
+
+            function updateButtons() {
+                const selectedCount = [...checkboxes].filter(c => c.checked).length;
+                const hasSelection = selectedCount > 0;
+
+                if (btnApprove) btnApprove.disabled = !hasSelection;
+                if (btnReject) btnReject.disabled = !hasSelection;
+            }
+
+            // Expose to window for inline onclicks
+            window.submitBulkAction = function(action) {
+                const selectedIds = [...checkboxes]
+                    .filter(c => c.checked)
+                    .map(c => c.value);
+
+                if (selectedIds.length === 0) return;
+
+                if (!confirm(`Apakah Anda yakin ingin ${action} ${selectedIds.length} foto terpilih?`)) return;
+
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/admin/galeri/bulk-${action}`;
+
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = csrfToken;
+                form.appendChild(csrfInput);
+
+                selectedIds.forEach(id => {
+                    const input = document.createElement('input');
+                    input.type = 'hidden';
+                    input.name = 'ids[]';
+                    input.value = id;
+                    form.appendChild(input);
+                });
+
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+
         function previewPhoto(photo) {
             currentPhotoId = photo.id;
 
@@ -164,7 +237,7 @@
             document.getElementById('preview-image').src = '/storage/' + photo.image_path;
             document.getElementById('preview-user').textContent = '@' + (photo.user ? photo.user.name : 'Unknown');
 
-            // Format date (simple approach or use library if available, here just raw string or simple JS format)
+            // Format date
             const date = new Date(photo.created_at);
             document.getElementById('preview-date').textContent = 'Diupload pada ' + date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
