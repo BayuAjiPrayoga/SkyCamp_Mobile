@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "120652636812",
+    "project_id": "skycamp-6e8d8",
+    "storage_bucket": "skycamp-6e8d8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:120652636812:android:7ea2b169393390b9d751a9",
+        "android_client_info": {
+          "package_name": "com.example.arkanta_skycamp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "120652636812-pkjbhvj0ejp3p9fetk0ega5u87jbv1l4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.arkanta_skycamp",
+            "certificate_hash": "df1902c97c459c1615f1f00ed5d346d08d41e95c"
+          }
+        },
+        {
+          "client_id": "120652636812-l2gqg4oh47uhc2n6adbfgk5nv4ojjkig.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyArYoXSff9LGcu307kOdm9NT4aHIlrlEag"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "120652636812-l2gqg4oh47uhc2n6adbfgk5nv4ojjkig.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
