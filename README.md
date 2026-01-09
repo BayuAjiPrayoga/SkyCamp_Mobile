@@ -1,6 +1,17 @@
-# 📱 LuhurCamp Mobile App Documentation
+﻿# 📱 LuhurCamp Mobile App Documentation
 
 Dokumentasi lengkap untuk aplikasi mobile LuhurCamp - Camping Ground Booking App.
+##  Dokumentasi Teknis
+
+Dokumen teknis detail tersedia di repository utama:
+
+-   **[SRS (Software Requirement Specification)](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/SRS.md)**: Detail kebutuhan fungsional sistem.
+-   **[SDD (System Design Document)](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/SDD.md)**: Arsitektur sistem, ERD, dan Topologi.
+-   **[Technical Specification](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Technical_Spec.md)**: Stack teknologi dan standar kode.
+-   **[Business Logic](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Business_Logic.md)**: Alur bisnis, flowchart, dan logika sistem.
+-   **[Project Plan](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Project_Plan.md)**: Timeline dan roadmap pengembangan.
+
+---
 
 ## 📋 Table of Contents
 
@@ -528,3 +539,5 @@ For technical support, contact:
 
 -   Email: support@luhurcamp.com
 -   Developer: Bayu Aji Prayoga
+
+
