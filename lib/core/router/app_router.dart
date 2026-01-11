@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../presentation/screens/auth/login_screen.dart';
 import '../../presentation/screens/auth/register_screen.dart';
+import '../../presentation/screens/auth/forgot_password_screen.dart';
 import '../../presentation/screens/home/home_screen.dart';
 import '../../presentation/screens/splash_screen.dart';
 import '../../presentation/screens/kavling/kavling_list_screen.dart';
@@ -24,7 +25,11 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(Ref ref) {
     ref.listen(authProvider, (_, newState) {
-      notifyListeners();
+      // Only refresh router on auth state changes that affect navigation
+      if (newState.status == AuthStatus.authenticated ||
+          newState.status == AuthStatus.unauthenticated) {
+        notifyListeners();
+      }
     });
   }
 }
@@ -41,18 +46,19 @@ final routerProvider = Provider<GoRouter>((ref) {
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
       final isLoggedIn = authState.status == AuthStatus.authenticated;
-      final isLoggingIn =
+      final isAuthRoute =
           state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+          state.matchedLocation == '/register' ||
+          state.matchedLocation == '/forgot-password';
       final isSplash = state.matchedLocation == '/splash';
 
       if (isSplash) return null;
 
-      if (!isLoggedIn && !isLoggingIn) {
+      if (!isLoggedIn && !isAuthRoute) {
         return '/login';
       }
 
-      if (isLoggedIn && isLoggingIn) {
+      if (isLoggedIn && isAuthRoute) {
         return '/home';
       }
 
@@ -68,6 +74,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
 
       // Main app with bottom navigation

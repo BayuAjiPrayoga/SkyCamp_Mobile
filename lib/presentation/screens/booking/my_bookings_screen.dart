@@ -13,7 +13,7 @@ class MyBookingsScreen extends ConsumerStatefulWidget {
   ConsumerState<MyBookingsScreen> createState() => _MyBookingsScreenState();
 }
 
-class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen> 
+class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
 
@@ -40,6 +40,11 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white.withValues(alpha: 0.6),
+          indicatorWeight: 3,
+          labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+          unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.normal),
           tabs: const [
             Tab(text: 'Aktif'),
             Tab(text: 'Selesai'),
@@ -54,11 +59,13 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
               children: [
                 _BookingList(
                   bookings: state.bookings
-                      .where((b) => 
-                          b.status == 'pending' || 
-                          b.status == 'confirmed' || 
-                          b.status == 'waiting_confirmation' ||
-                          b.status == 'checked_in')
+                      .where(
+                        (b) =>
+                            b.status == 'pending' ||
+                            b.status == 'confirmed' ||
+                            b.status == 'waiting_confirmation' ||
+                            b.status == 'checked_in',
+                      )
                       .toList(),
                   emptyMessage: 'Tidak ada booking aktif',
                 ),
@@ -70,7 +77,10 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
                 ),
                 _BookingList(
                   bookings: state.bookings
-                      .where((b) => b.status == 'cancelled' || b.status == 'rejected')
+                      .where(
+                        (b) =>
+                            b.status == 'cancelled' || b.status == 'rejected',
+                      )
                       .toList(),
                   emptyMessage: 'Tidak ada booking dibatalkan',
                 ),
@@ -93,9 +103,16 @@ class _BookingList extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.receipt_long_outlined, size: 64, color: AppColors.textMuted),
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: AppColors.textMuted,
+            ),
             const SizedBox(height: 16),
-            Text(emptyMessage, style: TextStyle(color: AppColors.textSecondary)),
+            Text(
+              emptyMessage,
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
           ],
         ),
       );
@@ -126,11 +143,13 @@ class _BookingCard extends StatelessWidget {
       case 'pending':
         return AppColors.warning;
       case 'waiting_confirmation':
-        return Colors.blue;
+        return Colors.orange;
       case 'confirmed':
         return AppColors.success;
+      case 'checked_in':
+        return Colors.blue;
       case 'completed':
-        return AppColors.info;
+        return Colors.grey;
       case 'cancelled':
       case 'rejected':
         return AppColors.error;
@@ -141,97 +160,241 @@ class _BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      child: InkWell(
-        onTap: () => context.push('/booking/${booking.id}'),
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    booking.code,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 20,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => context.push('/booking/${booking.id}'),
+          borderRadius: BorderRadius.circular(20),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // Header: ID and Status
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.receipt_long_rounded,
+                            color: AppColors.primary,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              booking.code,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            if (booking.kavling != null)
+                              Text(
+                                booking.kavling!.nama,
+                                style: const TextStyle(
+                                  color: AppColors.textSecondary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
                     ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: statusColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: statusColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(30),
+                        border: Border.all(
+                          color: statusColor.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      child: Text(
+                        booking.statusLabel,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
+                      ),
                     ),
-                    child: Text(
-                      booking.statusLabel,
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                        color: statusColor,
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 16),
+                  child: Divider(height: 1),
+                ),
+                // Body: Dates and Info
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildInfoRow(
+                            Icons.calendar_today_rounded,
+                            DateFormat(
+                              'dd MMM yyyy',
+                              'id_ID',
+                            ).format(booking.tanggalCheckIn),
+                            'Check-in',
+                          ),
+                          const SizedBox(height: 12),
+                          _buildInfoRow(
+                            Icons.event_busy_rounded,
+                            DateFormat(
+                              'dd MMM yyyy',
+                              'id_ID',
+                            ).format(booking.tanggalCheckOut),
+                            'Check-out',
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      height: 50,
+                      width: 1,
+                      color: Colors.grey.shade200,
+                      margin: const EdgeInsets.symmetric(horizontal: 16),
+                    ),
+                    Expanded(
+                      flex: 2,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          const Text(
+                            'Total Biaya',
+                            style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            booking.formattedTotal,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              '${booking.totalNights} Malam',
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                // Footer: Action Button
+                if (booking.canUploadPayment) ...[
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () => context.push('/booking/${booking.id}'),
+                      icon: const Icon(Icons.upload_file_rounded, size: 18),
+                      label: const Text('Upload Bukti Pembayaran'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        shadowColor: AppColors.primary.withValues(alpha: 0.3),
+                        elevation: 4,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(Icons.calendar_today, size: 16, color: AppColors.textMuted),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${DateFormat('dd MMM').format(booking.tanggalCheckIn)} - ${DateFormat('dd MMM yyyy').format(booking.tanggalCheckOut)}',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(Icons.nights_stay, size: 16, color: AppColors.textMuted),
-                  const SizedBox(width: 8),
-                  Text(
-                    '${booking.totalNights} malam',
-                    style: TextStyle(color: AppColors.textSecondary),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              const Divider(),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Total'),
-                  Text(
-                    booking.formattedTotal,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.primary,
-                      fontSize: 16,
-                    ),
-                  ),
-                ],
-              ),
-              if (booking.canUploadPayment) ...[
-                const SizedBox(height: 12),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => context.push('/booking/${booking.id}'),
-                    icon: const Icon(Icons.upload),
-                    label: const Text('Upload Bukti Bayar'),
-                  ),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(IconData icon, String text, String label) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade50,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 16, color: AppColors.textMuted),
+        ),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 10,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }

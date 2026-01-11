@@ -20,7 +20,7 @@ class BookingState {
   final bool isLoading;
   final String? error;
   final Booking? selectedBooking;
-  
+
   // Booking flow
   final Kavling? selectedKavling;
   final DateTime? checkInDate;
@@ -76,9 +76,9 @@ class BookingState {
 
   int get grandTotal => kavlingTotal + equipmentTotal;
 
-  bool get canSubmit => 
-      selectedKavling != null && 
-      checkInDate != null && 
+  bool get canSubmit =>
+      selectedKavling != null &&
+      checkInDate != null &&
       checkOutDate != null &&
       totalNights > 0;
 }
@@ -92,7 +92,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
   // Load my bookings
   Future<void> loadBookings() async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final bookings = await _repository.getMyBookings();
       state = state.copyWith(bookings: bookings, isLoading: false);
@@ -104,7 +104,7 @@ class BookingNotifier extends StateNotifier<BookingState> {
   // Load booking detail
   Future<void> loadBookingDetail(int id) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final booking = await _repository.getById(id);
       state = state.copyWith(selectedBooking: booking, isLoading: false);
@@ -135,14 +135,19 @@ class BookingNotifier extends StateNotifier<BookingState> {
     } else {
       // Add new item
       state = state.copyWith(
-        cart: [...state.cart, CartItem(peralatan: peralatan)],
+        cart: [
+          ...state.cart,
+          CartItem(peralatan: peralatan),
+        ],
       );
     }
   }
 
   void removeFromCart(int peralatanId) {
     state = state.copyWith(
-      cart: state.cart.where((item) => item.peralatan.id != peralatanId).toList(),
+      cart: state.cart
+          .where((item) => item.peralatan.id != peralatanId)
+          .toList(),
     );
   }
 
@@ -174,15 +179,21 @@ class BookingNotifier extends StateNotifier<BookingState> {
   // Submit booking
   Future<BookingResult> submitBooking() async {
     if (!state.canSubmit) {
-      return BookingResult.error(message: 'Lengkapi data booking terlebih dahulu');
+      return BookingResult.error(
+        message: 'Lengkapi data booking terlebih dahulu',
+      );
     }
 
     state = state.copyWith(isLoading: true, error: null);
 
-    final items = state.cart.map((item) => {
-      'peralatan_id': item.peralatan.id,
-      'qty': item.quantity,  // Laravel expects 'qty', not 'jumlah'
-    }).toList();
+    final items = state.cart
+        .map(
+          (item) => {
+            'peralatan_id': item.peralatan.id,
+            'qty': item.quantity, // Laravel expects 'qty', not 'jumlah'
+          },
+        )
+        .toList();
 
     final result = await _repository.createBooking(
       kavlingId: state.selectedKavling!.id,
@@ -227,9 +238,11 @@ class BookingNotifier extends StateNotifier<BookingState> {
     state = state.copyWith(isLoading: false, error: result.message);
     return result;
   }
-}
+} // End of BookingNotifier
 
 // Provider
-final bookingProvider = StateNotifierProvider<BookingNotifier, BookingState>((ref) {
+final bookingProvider = StateNotifierProvider<BookingNotifier, BookingState>((
+  ref,
+) {
   return BookingNotifier();
 });

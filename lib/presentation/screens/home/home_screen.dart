@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/theme/app_theme.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/auth_provider.dart';
@@ -15,13 +17,138 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  late PageController _announcementController;
+  Timer? _announcementTimer;
+  int _currentAnnouncementPage = 0;
+
   @override
   void initState() {
     super.initState();
+    _announcementController = PageController();
+
     // Load data on init
     Future.microtask(() {
       ref.read(kavlingProvider.notifier).loadKavlings();
       ref.read(announcementProvider.notifier).loadAnnouncements();
+      _checkFirstLogin();
+    });
+  }
+
+  @override
+  void dispose() {
+    _announcementTimer?.cancel();
+    _announcementController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _checkFirstLogin() async {
+    final authState = ref.read(authProvider);
+    final user = authState.user;
+
+    if (user != null) {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'welcome_shown_${user.id}';
+      final hasShown = prefs.getBool(key) ?? false;
+
+      if (!hasShown && mounted) {
+        // Set flag first to prevent double showing
+        await prefs.setBool(key, true);
+
+        if (!mounted) return;
+
+        // Show Welcome Dialog
+        showDialog(
+          context: context,
+          builder: (context) => Dialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            backgroundColor: Colors.white,
+            elevation: 10,
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child:
+                        const Icon(
+                              Icons.waving_hand_rounded,
+                              size: 48,
+                              color: AppColors.primary,
+                            )
+                            .animate(onPlay: (c) => c.repeat(reverse: true))
+                            .rotate(begin: -0.1, end: 0.1, duration: 600.ms),
+                  ),
+                  const SizedBox(height: 20),
+                  Text(
+                    'Selamat Datang, ${user.name}!',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Senang melihatmu di LuhurCamp. Temukan spot camping terbaikmu sekarang!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Mulai Petualangan',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  void _startAnnouncementTimer(int count) {
+    if (_announcementTimer != null || count <= 1) return;
+
+    _announcementTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      if (_announcementController.hasClients) {
+        _currentAnnouncementPage = (_currentAnnouncementPage + 1) % count;
+        _announcementController.animateToPage(
+          _currentAnnouncementPage,
+          duration: const Duration(milliseconds: 600),
+          curve: Curves.easeInOutQuint,
+        );
+      }
     });
   }
 
@@ -31,6 +158,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final user = authState.user;
     final kavlingState = ref.watch(kavlingProvider);
     final announcementState = ref.watch(announcementProvider);
+
+    // Start timer if we have announcements
+    if (announcementState.announcements.isNotEmpty) {
+      _startAnnouncementTimer(announcementState.announcements.length);
+    }
 
     return Scaffold(
       body: CustomScrollView(
@@ -45,7 +177,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+                    colors: [
+                      AppColors.primaryDark,
+                      AppColors.primary,
+                      AppColors.primaryLight,
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -69,8 +205,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                 radius: 24,
                                 backgroundColor: Colors.white,
                                 child: Text(
-                                  user?.name.isNotEmpty == true 
-                                      ? user!.name[0].toUpperCase() 
+                                  user?.name.isNotEmpty == true
+                                      ? user!.name[0].toUpperCase()
                                       : 'U',
                                   style: const TextStyle(
                                     fontSize: 20,
@@ -88,7 +224,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                                   Text(
                                     'Selamat Datang! 👋',
                                     style: TextStyle(
-                                      color: Colors.white.withValues(alpha: 0.85),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.85,
+                                      ),
                                       fontSize: 13,
                                     ),
                                   ),
@@ -106,7 +244,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             ),
                             IconButton(
                               onPressed: () => context.push('/announcement'),
-                              icon: const Icon(Icons.notifications_outlined, color: Colors.white),
+                              icon: const Icon(
+                                Icons.notifications_outlined,
+                                color: Colors.white,
+                              ),
                             ),
                           ],
                         ),
@@ -126,32 +267,37 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               delegate: SliverChildListDelegate([
                 // Quick Actions Row
                 _buildQuickActions(context),
-                
+
                 const SizedBox(height: 24),
 
                 // Featured Kavlings
-                _buildSectionHeader('Kavling Populer', () => context.go('/kavling'))
-                    .animate().fadeIn(delay: 200.ms).slideX(),
+                _buildSectionHeader(
+                  'Kavling Populer',
+                  () => context.go('/kavling'),
+                ).animate().fadeIn(delay: 200.ms).slideX(),
                 const SizedBox(height: 12),
-                _buildKavlingCarousel(kavlingState)
-                    .animate().fadeIn(delay: 300.ms).slideX(),
+                _buildKavlingCarousel(
+                  kavlingState,
+                ).animate().fadeIn(delay: 300.ms).slideX(),
 
                 const SizedBox(height: 24),
 
                 // Announcements
                 if (announcementState.announcements.isNotEmpty) ...[
-                  _buildSectionHeader('Pengumuman', () => context.push('/announcement'))
-                      .animate().fadeIn(delay: 400.ms).slideX(),
+                  _buildSectionHeader(
+                    'Pengumuman',
+                    () => context.push('/announcement'),
+                  ).animate().fadeIn(delay: 400.ms).slideX(),
                   const SizedBox(height: 12),
-                  _buildAnnouncementCard(announcementState)
-                      .animate().fadeIn(delay: 500.ms).slideX(),
+                  _buildAnnouncementCard(
+                    announcementState,
+                  ).animate().fadeIn(delay: 500.ms).slideX(),
                 ],
 
                 const SizedBox(height: 24),
 
                 // CTA Card
-                _buildCtaCard(context)
-                    .animate().fadeIn(delay: 600.ms).scale(),
+                _buildCtaCard(context).animate().fadeIn(delay: 600.ms).scale(),
 
                 const SizedBox(height: 80), // Bottom padding for nav bar
               ]),
@@ -177,8 +323,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         Expanded(
           child: _QuickActionButton(
             icon: Icons.add_box_rounded,
-            label: 'Booking Baru',
-            color: AppColors.info,
+            label: 'Booking',
+            color: AppColors.textPrimary, // Changed color to differentiate
             onTap: () => context.push('/booking/new'),
           ),
         ),
@@ -198,10 +344,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             color: AppColors.textPrimary,
           ),
         ),
-        TextButton(
-          onPressed: onSeeAll,
-          child: const Text('Lihat Semua'),
-        ),
+        TextButton(onPressed: onSeeAll, child: const Text('Lihat Semua')),
       ],
     );
   }
@@ -221,9 +364,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           color: AppColors.primary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Center(
-          child: Text('Belum ada kavling tersedia'),
-        ),
+        child: const Center(child: Text('Belum ada kavling tersedia')),
       );
     }
 
@@ -257,7 +398,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     height: 100,
                     decoration: BoxDecoration(
                       color: AppColors.primary.withValues(alpha: 0.2),
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
                     ),
                     child: Center(
                       child: Icon(
@@ -292,10 +435,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         ),
                         const SizedBox(height: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
                           decoration: BoxDecoration(
-                            color: kavling.isAvailable 
-                                ? AppColors.success.withValues(alpha: 0.15) 
+                            color: kavling.isAvailable
+                                ? AppColors.success.withValues(alpha: 0.15)
                                 : AppColors.error.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
@@ -304,7 +450,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w600,
-                              color: kavling.isAvailable ? AppColors.success : AppColors.error,
+                              color: kavling.isAvailable
+                                  ? AppColors.success
+                                  : AppColors.error,
                             ),
                           ),
                         ),
@@ -322,10 +470,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildAnnouncementCard(AnnouncementState state) {
     if (state.announcements.isEmpty) return const SizedBox.shrink();
-    
-    final latest = state.announcements.first;
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      height: 80, // Fixed height for the ticker
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(16),
@@ -343,32 +491,47 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  latest.title,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  latest.content,
-                  style: TextStyle(
-                    color: AppColors.textSecondary,
-                    fontSize: 12,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+            child: PageView.builder(
+              controller: _announcementController,
+              scrollDirection: Axis.vertical,
+              physics:
+                  const NeverScrollableScrollPhysics(), // Disable manual scroll for pureTicker feel or allow it
+              itemCount: state.announcements.length,
+              itemBuilder: (context, index) {
+                final announcement = state.announcements[index];
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      announcement.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      announcement.content,
+                      style: const TextStyle(
+                        color: AppColors.textSecondary,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                );
+              },
             ),
           ),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: AppColors.textMuted),
+          const Icon(
+            Icons.arrow_forward_ios,
+            size: 16,
+            color: AppColors.textMuted,
+          ),
         ],
       ),
     );
@@ -413,7 +576,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.white,
                     foregroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 12,
+                    ),
                   ),
                   child: const Text('Cari Kavling'),
                 ),

@@ -5,7 +5,7 @@ import '../../data/repositories/auth_repository.dart';
 export '../../data/repositories/auth_repository.dart' show UpdateProfileResult;
 
 // Auth State
-enum AuthStatus { initial, loading, authenticated, unauthenticated, error }
+enum AuthStatus { initial, loading, authenticated, unauthenticated, error, loginSuccess }
 
 class AuthState {
   final AuthStatus status;
@@ -109,7 +109,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
     if (result.isSuccess) {
       state = state.copyWith(
-        status: AuthStatus.authenticated,
+        status: AuthStatus.authenticated, // Register creates session immediately
         user: result.user,
       );
       return true;
@@ -180,6 +180,24 @@ class AuthNotifier extends StateNotifier<AuthState> {
           : AuthStatus.unauthenticated,
       errorMessage: null,
     );
+  }
+
+  Future<bool> forgotPassword(String email) async {
+    state = state.copyWith(status: AuthStatus.loading);
+
+    final result = await _repository.sendPasswordResetEmail(email);
+
+    if (result.isSuccess) {
+      state = state.copyWith(
+          status: AuthStatus.unauthenticated); // Reset to idle
+      return true;
+    }
+
+    state = state.copyWith(
+      status: AuthStatus.error,
+      errorMessage: result.message,
+    );
+    return false;
   }
 }
 
