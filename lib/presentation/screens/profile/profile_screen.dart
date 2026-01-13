@@ -538,11 +538,180 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                           title: 'Tentang Aplikasi',
                           subtitle: 'LuhurCamp v1.0.0',
                           onTap: () {
-                            showAboutDialog(
+                            showDialog(
                               context: context,
-                              applicationName: 'LuhurCamp',
-                              applicationVersion: '1.0.0',
-                              applicationLegalese: '© 2025 LuhurCamp',
+                              builder:
+                                  (context) => Dialog(
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(24),
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          // Logo
+                                          Container(
+                                            padding: const EdgeInsets.all(16),
+                                            decoration: BoxDecoration(
+                                              color: AppColors.primary
+                                                  .withValues(alpha: 0.1),
+                                              shape: BoxShape.circle,
+                                            ),
+                                            child: const Icon(
+                                              Icons.forest,
+                                              size: 48,
+                                              color: AppColors.primary,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 16),
+                                          // Title & Version
+                                          const Text(
+                                            'LuhurCamp',
+                                            style: TextStyle(
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            'v1.0.0',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: AppColors.textMuted,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          // Credits Divider
+                                          Row(
+                                            children: [
+                                              Expanded(
+                                                  child: Divider(
+                                                    color: Colors.grey[300],
+                                                  )),
+                                              Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 8,
+                                                    ),
+                                                child: Text(
+                                                  'CREDITS',
+                                                  style: TextStyle(
+                                                    fontSize: 10,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: AppColors.textMuted,
+                                                  ),
+                                                ),
+                                              ),
+                                              Expanded(
+                                                  child: Divider(
+                                                    color: Colors.grey[300],
+                                                  )),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 16),
+                                          // Creator Info
+                                          const Text(
+                                            'Developed by:',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 4),
+                                          const Text(
+                                            'Bayu Aji Prayoga',
+                                            style: TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.bold,
+                                              color: AppColors.textPrimary,
+                                            ),
+                                          ),
+                                          Text(
+                                            'NPM: 23552011194',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              color: AppColors.textSecondary,
+                                            ),
+                                          ),
+                                          Text(
+                                            'TIF RP 23 CNS A',
+                                            style: TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.textMuted,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 20),
+                                          // Startup Branding
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 12,
+                                              vertical: 6,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Colors.blue[50],
+                                              borderRadius:
+                                                  BorderRadius.circular(8),
+                                              border: Border.all(
+                                                color: Colors.blue.withValues(
+                                                  alpha: 0.3,
+                                                ),
+                                              ),
+                                            ),
+                                            child: const Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Icon(
+                                                  Icons.rocket_launch,
+                                                  size: 16,
+                                                  color: Colors.blue,
+                                                ),
+                                                SizedBox(width: 8),
+                                                Text(
+                                                  'Powered by Krevix',
+                                                  style: TextStyle(
+                                                    fontSize: 12,
+                                                    fontWeight: FontWeight.bold,
+                                                    color: Colors.blue,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                          const SizedBox(height: 24),
+                                          // Actions
+                                          Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceEvenly,
+                                            children: [
+                                              TextButton(
+                                                onPressed: () {
+                                                  showLicensePage(
+                                                    context: context,
+                                                    applicationName:
+                                                        'LuhurCamp',
+                                                    applicationVersion:
+                                                        '1.0.0',
+                                                    applicationLegalese:
+                                                        '© 2025 Bayu Aji Prayoga (Krevix)',
+                                                  );
+                                                },
+                                                child: const Text('License'),
+                                              ),
+                                              TextButton(
+                                                onPressed:
+                                                    () => Navigator.pop(
+                                                      context,
+                                                    ),
+                                                child: const Text('Close'),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
                             );
                           },
                         ),

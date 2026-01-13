@@ -24,10 +24,10 @@ class BookingRepository {
 
   Future<Booking?> getById(int id) async {
     try {
-      print('[BookingRepository] Loading booking detail for ID: $id');
+      // print('[BookingRepository] Loading booking detail for ID: $id');
       final response = await _apiClient.get('${ApiConfig.bookings}/$id');
-      print('[BookingRepository] Response status: ${response.statusCode}');
-      print('[BookingRepository] Response data: ${response.data}');
+      // print('[BookingRepository] Response status: ${response.statusCode}');
+      // print('[BookingRepository] Response data: ${response.data}');
       
       if (response.statusCode == 200) {
         final data = response.data is Map && response.data.containsKey('data')

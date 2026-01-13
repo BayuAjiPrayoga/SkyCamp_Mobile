@@ -207,7 +207,7 @@ class AuthRepository {
 
   Future<AuthResult> loginWithGoogle() async {
     try {
-      print('GOOGLE_LOGIN: Starting Google Sign In...');
+      // // print('GOOGLE_LOGIN: Starting Google Sign In...');
       // 1. Trigger Google Sign-In
       final googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile'],
@@ -224,25 +224,25 @@ class AuthRepository {
 
       final googleUser = await googleSignIn.signIn();
       if (googleUser == null) {
-        print('GOOGLE_LOGIN: Sign In Aborted by user.');
+        // // print('GOOGLE_LOGIN: Sign In Aborted by user.');
         return AuthResult.error(message: 'Login Google dibatalkan');
       }
 
-      print('GOOGLE_LOGIN: User signed in: ${googleUser.email}');
+      // // print('GOOGLE_LOGIN: User signed in: ${googleUser.email}');
 
       // 2. Obtain OAuth Details
       final GoogleSignInAuthentication googleAuth =
           await googleUser.authentication;
 
       if (googleAuth.idToken == null) {
-        print('GOOGLE_LOGIN: ID Token is null.');
+        // // print('GOOGLE_LOGIN: ID Token is null.');
         return AuthResult.error(
           message:
               'Gagal mendapatkan Google ID Token. Pastikan SHA-1 sudah dikonfigurasi di Firebase Console.',
         );
       }
 
-      print('GOOGLE_LOGIN: Obtained ID Token.');
+      // // print('GOOGLE_LOGIN: Obtained ID Token.');
 
       // 3. Create Credential for Firebase
       final credential = GoogleAuthProvider.credential(
@@ -251,18 +251,18 @@ class AuthRepository {
       );
 
       // 4. Sign-in to Firebase
-      print('GOOGLE_LOGIN: Signing into Firebase...');
+      // // print('GOOGLE_LOGIN: Signing into Firebase...');
       final UserCredential userCredential = await FirebaseAuth.instance
           .signInWithCredential(credential);
 
       // 5. Get Firebase ID Token
       final idToken = await userCredential.user?.getIdToken();
       if (idToken == null) {
-        print('GOOGLE_LOGIN: Firebase ID Token is null.');
+        // // print('GOOGLE_LOGIN: Firebase ID Token is null.');
         return AuthResult.error(message: 'Gagal mendapatkan Firebase ID Token');
       }
 
-      print('GOOGLE_LOGIN: Firebase Signed In. Token obtained. Sending to backend...');
+      // // print('GOOGLE_LOGIN: Firebase Signed In. Token obtained. Sending to backend...');
 
       // 6. Send Token to Backend
       final response = await _apiClient.post(
@@ -270,7 +270,7 @@ class AuthRepository {
         data: {'token': idToken},
       );
 
-      print('GOOGLE_LOGIN: Backend Response: ${response.statusCode}');
+      // // print('GOOGLE_LOGIN: Backend Response: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final responseData = response.data['data'];
@@ -282,17 +282,17 @@ class AuthRepository {
         // Send FCM token to backend for push notifications
         await notificationService.getTokenAndSync();
 
-        print('GOOGLE_LOGIN: Success! Token saved.');
+        // // print('GOOGLE_LOGIN: Success! Token saved.');
         return AuthResult.success(user: user, token: token);
       }
 
-      print('GOOGLE_LOGIN: Backend failed: ${response.data}');
+      // // print('GOOGLE_LOGIN: Backend failed: ${response.data}');
       return AuthResult.error(
         message: response.data['message'] ?? 'Login Backend failed',
       );
     } on DioException catch (e) {
-      print('GOOGLE_LOGIN: DioError: ${e.message}');
-      print('GOOGLE_LOGIN: Response Data: ${e.response?.data}'); // Added this line
+      // // print('GOOGLE_LOGIN: DioError: ${e.message}');
+      // // print('GOOGLE_LOGIN: Response Data: ${e.response?.data}'); // Added this line
       String errorMessage = 'Network error';
       if (e.response?.data != null && e.response?.data['message'] != null) {
         errorMessage = e.response!.data['message'];
@@ -303,10 +303,10 @@ class AuthRepository {
       }
       return AuthResult.error(message: errorMessage);
     } on FirebaseAuthException catch (e) {
-      print('GOOGLE_LOGIN: FirebaseAuthException: ${e.message}');
+      // // print('GOOGLE_LOGIN: FirebaseAuthException: ${e.message}');
       return AuthResult.error(message: 'Firebase Error: ${e.message}');
     } catch (e) {
-      print('GOOGLE_LOGIN: Unknown Error: $e');
+      // // print('GOOGLE_LOGIN: Unknown Error: $e');
       return AuthResult.error(message: e.toString());
     }
   }
@@ -323,7 +323,8 @@ class AuthRepository {
       }
 
       return AuthResult.error(
-        message: response.data['message'] ?? 'Gagal mengirim link reset password',
+        message:
+            response.data['message'] ?? 'Gagal mengirim link reset password',
       );
     } on DioException catch (e) {
       return AuthResult.error(

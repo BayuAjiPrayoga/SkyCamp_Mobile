@@ -25,13 +25,13 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(Ref ref) {
     ref.listen(authProvider, (previousState, newState) {
-      print('ROUTER DEBUG: Auth State Changed: ${previousState?.status} -> ${newState.status}');
+      // print('ROUTER DEBUG: Auth State Changed: ${previousState?.status} -> ${newState.status}');
       // Only refresh router if the STATUS changes
       if (previousState?.status != newState.status) {
-        print('ROUTER DEBUG: Status changed, notifying listeners!');
+        // print('ROUTER DEBUG: Status changed, notifying listeners!');
         notifyListeners();
       } else {
-        print('ROUTER DEBUG: Status unchanged, SKIPPING refresh.');
+        // print('ROUTER DEBUG: Status unchanged, SKIPPING refresh.');
       }
     });
   }
@@ -57,22 +57,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/forgot-password';
       final isSplash = state.matchedLocation == '/splash';
 
-      print('ROUTER DEBUG: Redirect Check inside ${state.matchedLocation}');
-      print('ROUTER DEBUG: AuthStatus: ${authState.status}, isLoggedIn: $isLoggedIn');
+      // print('ROUTER DEBUG: Redirect Check inside ${state.matchedLocation}');
+      // print('ROUTER DEBUG: AuthStatus: ${authState.status}, isLoggedIn: $isLoggedIn');
 
       if (isSplash) return null;
 
       if (!isLoggedIn && !isAuthRoute) {
-        print('ROUTER DEBUG: Not logged in, redirecting to /login');
+        // print('ROUTER DEBUG: Not logged in, redirecting to /login');
         return '/login';
       }
 
       if (isLoggedIn && isAuthRoute) {
-        print('ROUTER DEBUG: Logged in, redirecting to /home');
+        // print('ROUTER DEBUG: Logged in, redirecting to /home');
         return '/home';
       }
 
-      print('ROUTER DEBUG: No redirect needed.');
+      // print('ROUTER DEBUG: No redirect needed.');
       return null;
     },
     routes: [
