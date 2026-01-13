@@ -102,8 +102,10 @@ class BookingNotifier extends StateNotifier<BookingState> {
   }
 
   // Load booking detail
-  Future<void> loadBookingDetail(int id) async {
-    state = state.copyWith(isLoading: true, error: null);
+  Future<void> loadBookingDetail(int id, {bool silent = false}) async {
+    if (!silent) {
+      state = state.copyWith(isLoading: true, error: null);
+    }
 
     try {
       final booking = await _repository.getById(id);

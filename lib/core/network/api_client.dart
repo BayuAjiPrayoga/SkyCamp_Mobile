@@ -28,10 +28,11 @@ class ApiClient {
       },
       onError: (error, handler) {
         // Handle 401 Unauthorized
-        if (error.response?.statusCode == 401) {
-          // Clear token and redirect to login
-          _storage.clearToken();
-        }
+        // Note: We disable this global check to prevent "clearing token" during failed login attempts
+        // which might cause the app to think it needs to re-auth/splash.
+        // if (error.response?.statusCode == 401) {
+        //   _storage.clearToken();
+        // }
         return handler.next(error);
       },
     ));

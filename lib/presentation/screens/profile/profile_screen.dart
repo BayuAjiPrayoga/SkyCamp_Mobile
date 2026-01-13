@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/custom_text_field.dart';
@@ -21,6 +22,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _phoneController;
   bool _isEditing = false;
+  bool _isUploadingAvatar = false;
 
   @override
   void initState() {
@@ -46,16 +48,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> _handleLogout() async {
     final confirm = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Logout?'),
         content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context, false),
+            onPressed: () => Navigator.pop(ctx, false),
             child: const Text('Batal'),
           ),
           ElevatedButton(
-            onPressed: () => Navigator.pop(context, true),
+            onPressed: () => Navigator.pop(ctx, true),
             style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Logout'),
           ),
@@ -102,34 +105,84 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   }
 
   Future<void> _handleAvatarUpload() async {
+    // Show source selection dialog
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Pilih Sumber Foto',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  _SourceOption(
+                    icon: Icons.camera_alt,
+                    label: 'Kamera',
+                    onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                  ),
+                  _SourceOption(
+                    icon: Icons.photo_library,
+                    label: 'Galeri',
+                    onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
     final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+    final pickedFile = await picker.pickImage(
+      source: source,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 80,
+      preferredCameraDevice: CameraDevice.front,
+    );
 
-    if (pickedFile != null) {
-      if (!mounted) return;
+    if (pickedFile == null) return;
+
+    setState(() => _isUploadingAvatar = true);
+    
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Mengupload foto...')),
+    );
+
+    final result = await ref.read(authProvider.notifier).updateAvatar(pickedFile.path);
+
+    if (!mounted) return;
+    setState(() => _isUploadingAvatar = false);
+
+    if (result.isSuccess) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Mengupload foto...')),
+        const SnackBar(
+          content: Text('Foto profil berhasil diperbarui!'),
+          backgroundColor: AppColors.success,
+        ),
       );
-
-      final result = await ref.read(authProvider.notifier).updateAvatar(pickedFile.path);
-
-      if (!mounted) return;
-
-      if (result.isSuccess) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Foto profil berhasil diperbarui!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(result.message ?? 'Gagal upload foto'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(result.message ?? 'Gagal upload foto'),
+          backgroundColor: AppColors.error,
+        ),
+      );
     }
   }
 
@@ -142,6 +195,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Text('Ganti Password'),
         content: Form(
           key: formKey,
@@ -233,191 +287,377 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final user = authState.user;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profil Saya'),
-        actions: [
-          IconButton(
-            icon: Icon(_isEditing ? Icons.close : Icons.edit),
-            onPressed: _toggleEdit,
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            // Avatar
-            Center(
-              child: Stack(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.1),
-                    child: Text(
-                      user?.name.isNotEmpty == true 
-                          ? user!.name[0].toUpperCase() 
-                          : 'U',
-                      style: const TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
-                    ),
+      body: CustomScrollView(
+        slivers: [
+          // Modern Header with Gradient
+          SliverAppBar(
+            expandedHeight: 200,
+            pinned: true,
+            backgroundColor: AppColors.primary,
+            flexibleSpace: FlexibleSpaceBar(
+              background: Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [AppColors.primaryDark, AppColors.primary, AppColors.primaryLight],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: GestureDetector(
-                      onTap: _handleAvatarUpload,
-                      child: Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.camera_alt,
+                ),
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 20),
+                      // Avatar with upload button
+                      Stack(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 3),
+                            ),
+                            child: user?.avatar != null && user!.avatar!.isNotEmpty
+                                ? CircleAvatar(
+                                    radius: 45,
+                                    backgroundImage: CachedNetworkImageProvider(user.avatar!),
+                                    backgroundColor: Colors.white,
+                                  )
+                                : CircleAvatar(
+                                    radius: 45,
+                                    backgroundColor: Colors.white,
+                                    child: Text(
+                                      user?.name.isNotEmpty == true 
+                                          ? user!.name[0].toUpperCase() 
+                                          : 'U',
+                                      style: const TextStyle(
+                                        fontSize: 36,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  ),
+                          ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: GestureDetector(
+                              onTap: _isUploadingAvatar ? null : _handleAvatarUpload,
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  shape: BoxShape.circle,
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(alpha: 0.2),
+                                      blurRadius: 4,
+                                    ),
+                                  ],
+                                ),
+                                child: _isUploadingAvatar
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(strokeWidth: 2),
+                                      )
+                                    : const Icon(
+                                        Icons.camera_alt,
+                                        color: AppColors.primary,
+                                        size: 20,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        user?.name ?? 'User',
+                        style: const TextStyle(
                           color: Colors.white,
-                          size: 20,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                    ),
+                      Text(
+                        user?.email ?? '',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Form
-            Form(
-              key: _formKey,
-              child: Column(
-                children: [
-                  CustomTextField(
-                    controller: _nameController,
-                    label: 'Nama Lengkap',
-                    hint: 'Masukkan nama',
-                    prefixIcon: Icons.person_outline,
-                    enabled: _isEditing,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _emailController,
-                    label: 'Email',
-                    hint: 'Masukkan email',
-                    prefixIcon: Icons.email_outlined,
-                    enabled: false,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  CustomTextField(
-                    controller: _phoneController,
-                    label: 'No. Telepon',
-                    hint: '08xxxxxxxxxx',
-                    prefixIcon: Icons.phone_outlined,
-                    enabled: _isEditing,
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
-              ),
-            ),
-
-            if (_isEditing) ...[
-              const SizedBox(height: 24),
-              LoadingButton(
-                onPressed: _handleUpdateProfile,
-                isLoading: authState.status == AuthStatus.loading,
-                child: const Text('Simpan Perubahan'),
-              ),
-            ],
-
-            const SizedBox(height: 32),
-
-            // Menu Items
-            _MenuItem(
-              icon: Icons.receipt_long,
-              title: 'Riwayat Booking',
-              onTap: () => context.push('/my-bookings'),
-            ),
-            _MenuItem(
-              icon: Icons.photo_library,
-              title: 'Foto Saya',
-              onTap: () => context.push('/gallery'),
-            ),
-            if (user?.authProvider != 'google')
-              _MenuItem(
-                icon: Icons.lock_outline,
-                title: 'Ganti Password',
-                onTap: _showChangePasswordDialog,
-              ),
-            _MenuItem(
-              icon: Icons.help_outline,
-              title: 'Bantuan (WhatsApp)',
-              onTap: _handleHelp,
-            ),
-            _MenuItem(
-              icon: Icons.info_outline,
-              title: 'Tentang Aplikasi',
-              onTap: () {
-                showAboutDialog(
-                  context: context,
-                  applicationName: 'LuhurCamp',
-                  applicationVersion: '1.0.0',
-                  applicationLegalese: '© 2025 LuhurCamp',
-                );
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            // Logout Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: _handleLogout,
-                icon: const Icon(Icons.logout, color: AppColors.error),
-                label: const Text('Logout'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.error,
-                  side: const BorderSide(color: AppColors.error),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
                 ),
               ),
             ),
-          ],
-        ),
+            actions: [
+              IconButton(
+                icon: Icon(_isEditing ? Icons.close : Icons.edit, color: Colors.white),
+                onPressed: _toggleEdit,
+              ),
+            ],
+          ),
+
+          // Content
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Profile Form Card
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Informasi Profil',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            controller: _nameController,
+                            label: 'Nama Lengkap',
+                            hint: 'Masukkan nama',
+                            prefixIcon: Icons.person_outline,
+                            enabled: _isEditing,
+                          ),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            controller: _emailController,
+                            label: 'Email',
+                            hint: 'Masukkan email',
+                            prefixIcon: Icons.email_outlined,
+                            enabled: false,
+                            keyboardType: TextInputType.emailAddress,
+                          ),
+                          const SizedBox(height: 16),
+                          CustomTextField(
+                            controller: _phoneController,
+                            label: 'No. Telepon',
+                            hint: '08xxxxxxxxxx',
+                            prefixIcon: Icons.phone_outlined,
+                            enabled: _isEditing,
+                            keyboardType: TextInputType.phone,
+                          ),
+                          if (_isEditing) ...[
+                            const SizedBox(height: 20),
+                            LoadingButton(
+                              onPressed: _handleUpdateProfile,
+                              isLoading: authState.status == AuthStatus.loading,
+                              child: const Text('Simpan Perubahan'),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Menu Section
+                  const Text(
+                    'Menu',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Column(
+                      children: [
+                        _ModernMenuItem(
+                          icon: Icons.receipt_long,
+                          iconColor: AppColors.secondary,
+                          title: 'Riwayat Booking',
+                          subtitle: 'Lihat semua pesanan Anda',
+                          onTap: () => context.push('/my-bookings'),
+                        ),
+                        const Divider(height: 1, indent: 56),
+                        _ModernMenuItem(
+                          icon: Icons.photo_library,
+                          iconColor: Colors.purple,
+                          title: 'Galeri Saya',
+                          subtitle: 'Foto-foto camping Anda',
+                          onTap: () => context.push('/gallery'),
+                        ),
+                        if (user?.authProvider != 'google') ...[
+                          const Divider(height: 1, indent: 56),
+                          _ModernMenuItem(
+                            icon: Icons.lock_outline,
+                            iconColor: Colors.orange,
+                            title: 'Ganti Password',
+                            subtitle: 'Ubah password akun',
+                            onTap: _showChangePasswordDialog,
+                          ),
+                        ],
+                        const Divider(height: 1, indent: 56),
+                        _ModernMenuItem(
+                          icon: Icons.help_outline,
+                          iconColor: Colors.teal,
+                          title: 'Bantuan',
+                          subtitle: 'Hubungi admin via WhatsApp',
+                          onTap: _handleHelp,
+                        ),
+                        const Divider(height: 1, indent: 56),
+                        _ModernMenuItem(
+                          icon: Icons.info_outline,
+                          iconColor: Colors.blueGrey,
+                          title: 'Tentang Aplikasi',
+                          subtitle: 'LuhurCamp v1.0.0',
+                          onTap: () {
+                            showAboutDialog(
+                              context: context,
+                              applicationName: 'LuhurCamp',
+                              applicationVersion: '1.0.0',
+                              applicationLegalese: '© 2025 LuhurCamp',
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _handleLogout,
+                      icon: const Icon(Icons.logout),
+                      label: const Text('Logout'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.error.withValues(alpha: 0.1),
+                        foregroundColor: AppColors.error,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 100), // Bottom padding for nav bar
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _MenuItem extends StatelessWidget {
+class _SourceOption extends StatelessWidget {
   final IconData icon;
-  final String title;
+  final String label;
   final VoidCallback onTap;
 
-  const _MenuItem({
+  const _SourceOption({
     required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 32),
+          ),
+          const SizedBox(height: 8),
+          Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+}
+
+class _ModernMenuItem extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _ModernMenuItem({
+    required this.icon,
+    required this.iconColor,
     required this.title,
+    required this.subtitle,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, color: AppColors.primary),
-      ),
-      title: Text(title),
-      trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
-      contentPadding: EdgeInsets.zero,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      leading: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: iconColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: iconColor, size: 22),
+      ),
+      title: Text(
+        title,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          fontSize: 12,
+          color: AppColors.textMuted,
+        ),
+      ),
+      trailing: Icon(
+        Icons.chevron_right,
+        color: AppColors.textMuted,
+      ),
     );
   }
 }

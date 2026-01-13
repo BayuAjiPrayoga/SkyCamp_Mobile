@@ -42,7 +42,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
   void _startPolling() {
     // Poll every 3 seconds to check for status updates (e.g. Scanned by Admin)
     _pollingTimer = Timer.periodic(const Duration(seconds: 3), (timer) {
-      ref.read(bookingProvider.notifier).loadBookingDetail(widget.bookingId);
+      ref.read(bookingProvider.notifier).loadBookingDetail(widget.bookingId, silent: true);
     });
   }
 
@@ -318,7 +318,13 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     Icons.arrow_back_ios_new,
                     color: Colors.white,
                   ),
-                  onPressed: () => context.pop(),
+                  onPressed: () {
+                     if (context.canPop()) {
+                       context.pop();
+                     } else {
+                       context.go('/my-bookings'); // Better fallback than home
+                     }
+                  },
                 ),
                 title: innerBoxIsScrolled ? Text(booking.code) : null,
                 centerTitle: true,
@@ -356,7 +362,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                     // Status Card with Premium Look
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(24),
+                      padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 24), // Increased vertical padding for balance
                       decoration: BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.circular(20),
@@ -377,6 +383,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                         ),
                       ),
                       child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center, // Center vertically
                         children: [
                           Container(
                                 padding: const EdgeInsets.all(16),
@@ -388,7 +395,7 @@ class _BookingDetailScreenState extends ConsumerState<BookingDetailScreen> {
                                 ),
                                 child: Icon(
                                   _getStatusIcon(booking.status),
-                                  size: 40,
+                                  size: 48, // Slightly larger
                                   color: _getStatusColor(booking.status),
                                 ),
                               )

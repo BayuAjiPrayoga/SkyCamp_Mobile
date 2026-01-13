@@ -43,10 +43,15 @@ class KavlingRepository {
         if (data is Map && data.containsKey('data')) {
           data = data['data'];
         }
-        
-        // Unwrap 'kavling' if exists (API show method nests kavling inside data)
+
+        // Check if we have the nested structure
         if (data is Map && data.containsKey('kavling')) {
-          data = data['kavling'];
+          final kavlingData = Map<String, dynamic>.from(data['kavling']);
+          // Merge is_available if it exists as a sibling
+          if (data.containsKey('is_available')) {
+            kavlingData['is_available'] = data['is_available'];
+          }
+          return Kavling.fromJson(kavlingData);
         }
         
         return Kavling.fromJson(data);

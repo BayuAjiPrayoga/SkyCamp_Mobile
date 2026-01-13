@@ -7,6 +7,7 @@ class Kavling {
   final String status;
   final String? gambar;
   final String? deskripsi;
+  final bool isAvailable;
 
   Kavling({
     required this.id,
@@ -17,6 +18,7 @@ class Kavling {
     required this.status,
     this.gambar,
     this.deskripsi,
+    this.isAvailable = true,
   });
 
   factory Kavling.fromJson(Map<String, dynamic> json) {
@@ -57,11 +59,13 @@ class Kavling {
       status: json['status']?.toString() ?? 'tersedia',
       gambar: json['gambar_url']?.toString() ?? json['gambar']?.toString(),
       deskripsi: json['deskripsi']?.toString(),
+      // Use explicit availability if present, otherwise fallback to status check
+      isAvailable: json['is_available'] ?? (json['status'] == 'aktif'),
     );
   }
 
-  // API uses 'aktif' for available kavlings
-  bool get isAvailable => status == 'aktif';
+  // API uses 'aktif' for available kavlings, but now we respect isAvailable
+  // bool get isAvailable => status == 'aktif';
 
   String get formattedPrice {
     return 'Rp ${hargaPerMalam.toString().replaceAllMapped(

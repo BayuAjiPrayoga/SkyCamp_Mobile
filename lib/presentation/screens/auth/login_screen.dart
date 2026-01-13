@@ -22,16 +22,18 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   // Rive State Machine
   StateMachineController? controller;
-  SMIInput<bool>? isChecking;
+  SMIInput<bool>? isFocus;
   SMIInput<double>? numLook;
-  SMIInput<bool>? isHandsUp;
-  SMITrigger? trigSuccess;
-  SMITrigger? trigFail;
+  SMIInput<bool>? isPrivateField; // Hands up covering eyes
+  SMIInput<bool>? isPrivateFieldShow; // Peeking through fingers
+  SMITrigger? successTrigger;
+  SMITrigger? failTrigger;
 
   final FocusNode _emailFocus = FocusNode();
   final FocusNode _passwordFocus = FocusNode();
 
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -41,15 +43,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   void _emailFocusChanged() {
-    isChecking?.change(_emailFocus.hasFocus);
+    if (_emailFocus.hasFocus) {
+      isFocus?.change(true);
+      isPrivateField?.change(false);
+      isPrivateFieldShow?.change(false);
+    } else {
+      isFocus?.change(false);
+    }
   }
 
   void _passwordFocusChanged() {
-    isChecking?.change(false); // Pastikan mata tidak melirik saat di password
     if (_passwordFocus.hasFocus) {
-      isHandsUp?.change(_obscurePassword);
+      isFocus?.change(false); // Stop looking around
+      isPrivateField?.change(true); // Hands up
+      isPrivateFieldShow?.change(!_obscurePassword); // Peek if visible
     } else {
-      isHandsUp?.change(false);
+      isPrivateField?.change(false);
+      isPrivateFieldShow?.change(false);
     }
   }
 
@@ -64,21 +74,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
+    FocusScope.of(context).unfocus(); // Close keyboard
+    
     if (_formKey.currentState?.validate() ?? false) {
-      // Reset hands position before login attempt
-      isHandsUp?.change(false);
-      isChecking?.change(false);
+      // Local loading handling
+      setState(() => _isLoading = true);
 
+      // Make bear look busy/focusing during loading
+      // For the new animation, isFocus=true seems appropriate or just numLook moving
+      isPrivateField?.change(false);
+      isFocus?.change(true); 
+
+      // Note: We expect AuthNotifier NOT to set global loading to prevent redirects
       final success = await ref
           .read(authProvider.notifier)
           .login(_emailController.text.trim(), _passwordController.text);
+      
+      // Stop checking animation and local loading
+      isFocus?.change(false);
+      if (mounted) setState(() => _isLoading = false);
 
       if (!mounted) return;
 
       if (success) {
-        trigSuccess?.fire();
+        // Try to fire animation safely
+        try {
+          successTrigger?.fire();
+        } catch (_) {}
+        
+        // Wait for animation to play
         await Future.delayed(const Duration(milliseconds: 1500));
-        if (mounted) context.go('/home');
+        
+        if (mounted) {
+           // This will update status to authenticated and trigger router redirect
+           ref.read(authProvider.notifier).finalizeLogin();
+           // Force navigation
+           context.go('/home');
+        }
       } else {
         // Show error snackbar
         final errorMessage = ref.read(authProvider).errorMessage;
@@ -91,25 +123,42 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           );
         }
 
-        // Fire fail animation and wait for it to play
-        trigFail?.fire();
-        await Future.delayed(const Duration(milliseconds: 1000));
+        // Fire fail animation
+        try {
+          failTrigger?.fire();
+        } catch (_) {}
       }
     }
   }
 
   Future<void> _handleGoogleLogin() async {
-    isHandsUp?.change(false);
-    isChecking?.change(false);
+    setState(() => _isLoading = true);
+    isPrivateField?.change(false);
+    isFocus?.change(true); // Bear looks busy
 
+    // Note: We expect AuthNotifier NOT to set global loading
     final success = await ref.read(authProvider.notifier).loginWithGoogle();
+    
+    isFocus?.change(false); // Stop busy animation
+    if (mounted) setState(() => _isLoading = false);
 
     if (!mounted) return;
 
     if (success) {
-      trigSuccess?.fire();
+      // Try to fire animation safely
+      try {
+        successTrigger?.fire();
+      } catch (_) {}
+      
+      // Wait for animation
       await Future.delayed(const Duration(milliseconds: 1500));
-      if (mounted) context.go('/home');
+      
+      if (mounted) {
+        // Update state to authenticated
+        ref.read(authProvider.notifier).finalizeLogin();
+        // Force navigation to home to ensure user isn't stuck
+        context.go('/home');
+      }
     } else {
       // Show error snackbar
       final errorMessage = ref.read(authProvider).errorMessage;
@@ -122,15 +171,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
       }
 
-      trigFail?.fire();
+      try {
+        failTrigger?.fire();
+      } catch (_) {}
       await Future.delayed(const Duration(milliseconds: 1000));
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final authState = ref.watch(authProvider);
-    final isLoading = authState.status == AuthStatus.loading;
+    // Only use local loading state, ignore global auth status loading to prevent UI flicker/redirects
+    final isLoading = _isLoading;
 
     // Show error snackbar
     return Scaffold(
@@ -172,7 +223,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           height: riveSize,
                           width: riveSize,
                           child: RiveAnimation.asset(
-                            'assets/loginpolar.riv',
+                            'assets/animation/auth-teddy.riv',
                             fit: BoxFit.contain,
                             stateMachines: const ['Login Machine'],
                             onInit: (artboard) {
@@ -182,22 +233,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               );
                               if (controller != null) {
                                 artboard.addController(controller!);
-                                isChecking = controller?.findInput<bool>(
-                                  'isChecking',
-                                );
-                                numLook = controller?.findInput<double>(
-                                  'numLook',
-                                );
-                                isHandsUp = controller?.findInput<bool>(
-                                  'isHandsUp',
-                                );
-                                // Triggers need special handling
-                                trigSuccess =
-                                    controller?.findSMI('trigSuccess')
-                                        as SMITrigger?;
-                                trigFail =
-                                    controller?.findSMI('trigFail')
-                                        as SMITrigger?;
+                                isFocus = controller?.getBoolInput('isFocus');
+                                numLook = controller?.getNumberInput('numLook');
+                                isPrivateField = controller?.getBoolInput('isPrivateField');
+                                isPrivateFieldShow = controller?.getBoolInput('isPrivateFieldShow');
+                                successTrigger = controller?.getTriggerInput('successTrigger');
+                                failTrigger = controller?.getTriggerInput('failTrigger');
                               }
                             },
                           ),
@@ -250,14 +291,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 _obscurePassword = !_obscurePassword;
                               });
                               if (_passwordFocus.hasFocus) {
-                                isHandsUp?.change(_obscurePassword);
+                                // If password visible, peek (shown=true). If hidden, cover eyes (shown=false).
+                                isPrivateFieldShow?.change(!_obscurePassword);
                               }
                             },
                             icon: Icon(
                               _obscurePassword
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
-                              color: AppColors.textMuted,
+                                color: AppColors.textMuted,
                             ),
                           ),
                           validator: (value) {
@@ -289,9 +331,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
                   // Login Button
                   LoadingButton(
-                    onPressed: _handleLogin,
-                    isLoading: isLoading,
-                    child: const Text('Masuk'),
+                    onPressed: isLoading ? null : () {
+                      _handleLogin();
+                    },
+                    isLoading: false, // Disable spinner as requested
+                    child: Text(isLoading ? 'Sedang Memproses...' : 'Masuk'),
                   ),
 
                   const SizedBox(height: 16),

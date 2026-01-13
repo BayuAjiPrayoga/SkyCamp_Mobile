@@ -83,14 +83,15 @@ class _BookingFlowScreenState extends ConsumerState<BookingFlowScreen> {
     
     if (!mounted) return;
     
-    if (result.isSuccess) {
+    if (result.isSuccess && result.booking != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Booking berhasil! Silakan upload bukti pembayaran.'),
           backgroundColor: AppColors.success,
         ),
       );
-      context.go('/my-bookings');
+      // Navigate directly to booking detail to upload payment
+      context.go('/booking/${result.booking!.id}');
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -94,15 +94,26 @@ class NotificationService {
       const channel = AndroidNotificationChannel(
         'luhurcamp_channel',
         'LuhurCamp Notifications',
-        description: 'Notifikasi booking dan informasi LuhurCamp',
-        importance: Importance.high,
+        description: 'Notifikasi umum',
+        importance: Importance.defaultImportance,
+      );
+      
+      const alertChannel = AndroidNotificationChannel(
+        'luhurcamp_alert_channel',
+        'LuhurCamp Alerts',
+        description: 'Notifikasi penting dengan suara khusus',
+        importance: Importance.max,
+        sound: RawResourceAndroidNotificationSound('luhur_alert'),
+        playSound: true,
       );
 
-      await _localNotifications
+      final flutterLocalNotificationsPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
-          >()
-          ?.createNotificationChannel(channel);
+          >();
+          
+      await flutterLocalNotificationsPlugin?.createNotificationChannel(channel);
+      await flutterLocalNotificationsPlugin?.createNotificationChannel(alertChannel);
     }
   }
 
@@ -148,18 +159,21 @@ class NotificationService {
     String? payload,
   }) async {
     const androidDetails = AndroidNotificationDetails(
-      'luhurcamp_channel',
-      'LuhurCamp Notifications',
-      channelDescription: 'Notifikasi booking dan informasi LuhurCamp',
-      importance: Importance.high,
+      'luhurcamp_alert_channel', // New channel ID for custom sound
+      'LuhurCamp Alerts',
+      channelDescription: 'Notifikasi penting dengan suara khusus',
+      importance: Importance.max,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
+      sound: RawResourceAndroidNotificationSound('luhur_alert'),
+      playSound: true,
     );
 
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'luhur_alert.aiff', // iOS requires .aiff, .wav, or .caf
     );
 
     const details = NotificationDetails(

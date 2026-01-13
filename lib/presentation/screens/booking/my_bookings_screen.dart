@@ -68,12 +68,18 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
                       )
                       .toList(),
                   emptyMessage: 'Tidak ada booking aktif',
+                  onRefresh: () async {
+                    await ref.read(bookingProvider.notifier).loadBookings();
+                  },
                 ),
                 _BookingList(
                   bookings: state.bookings
                       .where((b) => b.status == 'completed')
                       .toList(),
                   emptyMessage: 'Belum ada booking selesai',
+                  onRefresh: () async {
+                    await ref.read(bookingProvider.notifier).loadBookings();
+                  },
                 ),
                 _BookingList(
                   bookings: state.bookings
@@ -83,6 +89,9 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
                       )
                       .toList(),
                   emptyMessage: 'Tidak ada booking dibatalkan',
+                  onRefresh: () async {
+                    await ref.read(bookingProvider.notifier).loadBookings();
+                  },
                 ),
               ],
             ),
@@ -93,35 +102,47 @@ class _MyBookingsScreenState extends ConsumerState<MyBookingsScreen>
 class _BookingList extends StatelessWidget {
   final List<Booking> bookings;
   final String emptyMessage;
+  final Future<void> Function()? onRefresh;
 
-  const _BookingList({required this.bookings, required this.emptyMessage});
+  const _BookingList({
+    required this.bookings,
+    required this.emptyMessage,
+    this.onRefresh,
+  });
 
   @override
   Widget build(BuildContext context) {
     if (bookings.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.receipt_long_outlined,
-              size: 64,
-              color: AppColors.textMuted,
+      return RefreshIndicator(
+        onRefresh: onRefresh ?? () async {},
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: SizedBox(
+            height: MediaQuery.of(context).size.height * 0.7,
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.receipt_long_outlined,
+                    size: 64,
+                    color: AppColors.textMuted,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    emptyMessage,
+                    style: TextStyle(color: AppColors.textSecondary),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              emptyMessage,
-              style: TextStyle(color: AppColors.textSecondary),
-            ),
-          ],
+          ),
         ),
       );
     }
 
     return RefreshIndicator(
-      onRefresh: () async {
-        // Will be handled by parent
-      },
+      onRefresh: onRefresh ?? () async {},
       child: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: bookings.length,
@@ -133,7 +154,7 @@ class _BookingList extends StatelessWidget {
   }
 }
 
-class _BookingCard extends StatelessWidget {
+class _BookingCard extends ConsumerWidget {
   final Booking booking;
 
   const _BookingCard({required this.booking});
@@ -159,7 +180,7 @@ class _BookingCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -176,7 +197,11 @@ class _BookingCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () => context.push('/booking/${booking.id}'),
+          onTap: () async {
+            await context.push('/booking/${booking.id}');
+            // Refresh list when returning from detail page
+            ref.read(bookingProvider.notifier).loadBookings();
+          },
           borderRadius: BorderRadius.circular(20),
           child: Padding(
             padding: const EdgeInsets.all(20),

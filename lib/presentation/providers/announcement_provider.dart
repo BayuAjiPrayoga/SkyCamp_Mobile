@@ -1,4 +1,3 @@
-
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/announcement_model.dart';
 import '../../data/repositories/announcement_repository.dart';
@@ -31,28 +30,34 @@ class AnnouncementState {
 // Notifier
 class AnnouncementNotifier extends StateNotifier<AnnouncementState> {
   final AnnouncementRepository _repository;
+  DateTime? _lastFetch;
+  static const _cacheDuration = Duration(minutes: 10);
 
   AnnouncementNotifier(this._repository) : super(AnnouncementState());
 
-  Future<void> loadAnnouncements() async {
+  Future<void> loadAnnouncements({bool forceRefresh = false}) async {
+    // Skip if already loaded and cache is still valid
+    if (!forceRefresh &&
+        state.announcements.isNotEmpty &&
+        _lastFetch != null &&
+        DateTime.now().difference(_lastFetch!) < _cacheDuration) {
+      return;
+    }
+
     state = state.copyWith(isLoading: true, error: null);
     try {
       final announcements = await _repository.getAnnouncements();
-      state = state.copyWith(
-        announcements: announcements,
-        isLoading: false,
-      );
+      _lastFetch = DateTime.now();
+      state = state.copyWith(announcements: announcements, isLoading: false);
     } catch (e) {
-      state = state.copyWith(
-        isLoading: false,
-        error: e.toString(),
-      );
+      state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 }
 
 // Provider
-final announcementProvider = StateNotifierProvider<AnnouncementNotifier, AnnouncementState>((ref) {
-  final repository = ref.watch(announcementRepositoryProvider);
-  return AnnouncementNotifier(repository);
-});
+final announcementProvider =
+    StateNotifierProvider<AnnouncementNotifier, AnnouncementState>((ref) {
+      final repository = ref.watch(announcementRepositoryProvider);
+      return AnnouncementNotifier(repository);
+    });

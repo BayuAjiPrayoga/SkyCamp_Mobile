@@ -51,43 +51,54 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<bool> login(String email, String password) async {
-    state = state.copyWith(status: AuthStatus.loading);
+    // Note: Local loading is handled by UI (LoginScreen) to avoid redirects
+    // state = state.copyWith(status: AuthStatus.loading);
 
     final result = await _repository.login(email, password);
 
     if (result.isSuccess) {
       state = state.copyWith(
-        status: AuthStatus.authenticated,
+        // Keep status as-is (unauthenticated) to prevent router refresh/redirect during animation
+        // status: AuthStatus.loginSuccess, 
         user: result.user,
       );
       return true;
     }
 
     state = state.copyWith(
-      status: AuthStatus.error,
+      // status: AuthStatus.error, <--- OLD
+      status: state.status, // Keep current status to prevent router rebuild/green screen
       errorMessage: result.message,
     );
     return false;
   }
 
   Future<bool> loginWithGoogle() async {
-    state = state.copyWith(status: AuthStatus.loading);
+    // Note: Local loading is handled by UI
+    // state = state.copyWith(status: AuthStatus.loading);
 
     final result = await _repository.loginWithGoogle();
 
     if (result.isSuccess) {
       state = state.copyWith(
-        status: AuthStatus.authenticated,
+        // Keep status as-is (unauthenticated) to allow animation to finish
+        // status: AuthStatus.loginSuccess,
         user: result.user,
       );
       return true;
     }
 
     state = state.copyWith(
-      status: AuthStatus.error,
+      // status: AuthStatus.error,
+      status: state.status, // Keep current status
       errorMessage: result.message,
     );
     return false;
+  }
+
+  void finalizeLogin() {
+    // Called by UI after success animation is complete
+    state = state.copyWith(status: AuthStatus.authenticated);
   }
 
   Future<bool> register({
@@ -116,7 +127,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
 
     state = state.copyWith(
-      status: AuthStatus.error,
+      // status: AuthStatus.error,
+      status: state.status, // Keep current status
       errorMessage: result.message,
     );
     return false;

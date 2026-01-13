@@ -8,6 +8,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/kavling_provider.dart';
 import '../../providers/announcement_provider.dart';
+import '../../widgets/kavling_skeleton.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -19,6 +20,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> {
   late PageController _announcementController;
   Timer? _announcementTimer;
+  Timer? _refreshTimer; // Polling timer
   int _currentAnnouncementPage = 0;
 
   @override
@@ -26,19 +28,36 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     super.initState();
     _announcementController = PageController();
 
-    // Load data on init
-    Future.microtask(() {
-      ref.read(kavlingProvider.notifier).loadKavlings();
-      ref.read(announcementProvider.notifier).loadAnnouncements();
+    // Load data on init - parallel loading for better performance
+    Future.microtask(() async {
+      // Load both in parallel
+      await Future.wait([
+        ref.read(kavlingProvider.notifier).loadKavlings(),
+        ref.read(announcementProvider.notifier).loadAnnouncements(),
+      ]);
       _checkFirstLogin();
     });
+
+    _startPolling();
   }
 
   @override
   void dispose() {
     _announcementTimer?.cancel();
+    _refreshTimer?.cancel();
     _announcementController.dispose();
     super.dispose();
+  }
+
+  void _startPolling() {
+    // Poll every 10 seconds for availability updates
+    _refreshTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+      ref.read(kavlingProvider.notifier).loadKavlings(forceRefresh: true, silent: true);
+    });
   }
 
   Future<void> _checkFirstLogin() async {
@@ -152,6 +171,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     });
   }
 
+  Future<void> _onRefresh() async {
+    await Future.wait([
+      ref.read(kavlingProvider.notifier).loadKavlings(forceRefresh: true),
+      ref
+          .read(announcementProvider.notifier)
+          .loadAnnouncements(forceRefresh: true),
+    ]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authProvider);
@@ -165,146 +193,168 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     }
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          // Modern App Bar with gradient
-          SliverAppBar(
-            expandedHeight: 180,
-            floating: false,
-            pinned: true,
-            backgroundColor: AppColors.primary,
-            flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      AppColors.primaryDark,
-                      AppColors.primary,
-                      AppColors.primaryLight,
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+      body: RefreshIndicator(
+        onRefresh: _onRefresh,
+        color: AppColors.primary,
+        child: CustomScrollView(
+          slivers: [
+            // Modern App Bar with gradient
+            SliverAppBar(
+              expandedHeight: 180,
+              floating: false,
+              pinned: true,
+              backgroundColor: AppColors.primary,
+              flexibleSpace: FlexibleSpaceBar(
+                background: Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        AppColors.primaryDark,
+                        AppColors.primary,
+                        AppColors.primaryLight,
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                ),
-                child: SafeArea(
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(3),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                shape: BoxShape.circle,
+                  child: SafeArea(
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(3),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: user?.avatar != null && user!.avatar!.isNotEmpty
+                                    ? CircleAvatar(
+                                        radius: 24,
+                                        backgroundImage: NetworkImage(user.avatar!),
+                                        backgroundColor: Colors.white,
+                                      )
+                                    : CircleAvatar(
+                                        radius: 24,
+                                        backgroundColor: Colors.white,
+                                        child: Text(
+                                          user?.name.isNotEmpty == true
+                                              ? user!.name[0].toUpperCase()
+                                              : 'U',
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: AppColors.primary,
+                                          ),
+                                        ),
+                                      ),
                               ),
-                              child: CircleAvatar(
-                                radius: 24,
-                                backgroundColor: Colors.white,
-                                child: Text(
-                                  user?.name.isNotEmpty == true
-                                      ? user!.name[0].toUpperCase()
-                                      : 'U',
-                                  style: const TextStyle(
-                                    fontSize: 20,
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'Selamat Datang! 👋',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.85,
+                                        ),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      user?.name ?? 'Camper',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Selamat Datang! 👋',
-                                    style: TextStyle(
-                                      color: Colors.white.withValues(
-                                        alpha: 0.85,
-                                      ),
-                                      fontSize: 13,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    user?.name ?? 'Camper',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
+                              IconButton(
+                                onPressed: () => context.push('/announcement'),
+                                icon: const Icon(
+                                  Icons.notifications_outlined,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
-                            IconButton(
-                              onPressed: () => context.push('/announcement'),
-                              icon: const Icon(
-                                Icons.notifications_outlined,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
               ),
+              title: const Text('LuhurCamp'),
             ),
-            title: const Text('LuhurCamp'),
-          ),
 
-          // Content
-          SliverPadding(
-            padding: const EdgeInsets.all(16),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                // Quick Actions Row
-                _buildQuickActions(context),
+            // Content
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: SliverList(
+                delegate: SliverChildListDelegate([
+                  // Quick Actions Row
+                  _buildQuickActions(context),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // Featured Kavlings
-                _buildSectionHeader(
-                  'Kavling Populer',
-                  () => context.go('/kavling'),
-                ).animate().fadeIn(delay: 200.ms).slideX(),
-                const SizedBox(height: 12),
-                _buildKavlingCarousel(
-                  kavlingState,
-                ).animate().fadeIn(delay: 300.ms).slideX(),
-
-                const SizedBox(height: 24),
-
-                // Announcements
-                if (announcementState.announcements.isNotEmpty) ...[
+                  // Featured Kavlings
                   _buildSectionHeader(
-                    'Pengumuman',
-                    () => context.push('/announcement'),
-                  ).animate().fadeIn(delay: 400.ms).slideX(),
+                    'Kavling Populer',
+                    () => context.go('/kavling'),
+                  ).animate().fadeIn(delay: 200.ms).slideX(),
                   const SizedBox(height: 12),
-                  _buildAnnouncementCard(
-                    announcementState,
-                  ).animate().fadeIn(delay: 500.ms).slideX(),
-                ],
+                  _buildKavlingCarousel(
+                    kavlingState,
+                  ).animate().fadeIn(delay: 300.ms).slideX(),
 
-                const SizedBox(height: 24),
+                  const SizedBox(height: 24),
 
-                // CTA Card
-                _buildCtaCard(context).animate().fadeIn(delay: 600.ms).scale(),
+                  // Announcements
+                  if (announcementState.isLoading) ...[
+                    _buildSectionHeader(
+                      'Pengumuman',
+                      () => context.push('/announcement'),
+                    ).animate().fadeIn(delay: 400.ms).slideX(),
+                    const SizedBox(height: 12),
+                    const AnnouncementSkeleton()
+                        .animate()
+                        .fadeIn(delay: 500.ms)
+                        .slideX(),
+                  ] else if (announcementState.announcements.isNotEmpty) ...[
+                    _buildSectionHeader(
+                      'Pengumuman',
+                      () => context.push('/announcement'),
+                    ).animate().fadeIn(delay: 400.ms).slideX(),
+                    const SizedBox(height: 12),
+                    _buildAnnouncementCard(
+                      announcementState,
+                    ).animate().fadeIn(delay: 500.ms).slideX(),
+                  ],
 
-                const SizedBox(height: 80), // Bottom padding for nav bar
-              ]),
+                  const SizedBox(height: 24),
+
+                  // CTA Card
+                  _buildCtaCard(
+                    context,
+                  ).animate().fadeIn(delay: 600.ms).scale(),
+
+                  const SizedBox(height: 80), // Bottom padding for nav bar
+                ]),
+              ),
             ),
-          ),
-        ],
-      ),
+          ],
+        ),
+      ), // Close RefreshIndicator
     );
   }
 
@@ -351,9 +401,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
   Widget _buildKavlingCarousel(KavlingState state) {
     if (state.isLoading) {
-      return const SizedBox(
-        height: 180,
-        child: Center(child: CircularProgressIndicator()),
+      // Show skeleton loading instead of spinner
+      return SizedBox(
+        height: 200,
+        child: ListView.builder(
+          scrollDirection: Axis.horizontal,
+          itemCount: 3,
+          itemBuilder: (context, index) => Container(
+            width: 160,
+            margin: EdgeInsets.only(right: index < 2 ? 12 : 0),
+            child: const KavlingSkeleton(),
+          ),
+        ),
       );
     }
 
@@ -402,12 +461,31 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         top: Radius.circular(16),
                       ),
                     ),
-                    child: Center(
-                      child: Icon(
-                        Icons.landscape_rounded,
-                        size: 48,
-                        color: AppColors.primary.withValues(alpha: 0.5),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
                       ),
+                      child: kavling.gambar != null
+                          ? Image.network(
+                              kavling.gambar!,
+                              width: double.infinity,
+                              height: 100,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) => Center(
+                                child: Icon(
+                                  Icons.landscape_rounded,
+                                  size: 48,
+                                  color: AppColors.primary.withValues(alpha: 0.5),
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: Icon(
+                                Icons.landscape_rounded,
+                                size: 48,
+                                color: AppColors.primary.withValues(alpha: 0.5),
+                              ),
+                            ),
                     ),
                   ),
                   Padding(

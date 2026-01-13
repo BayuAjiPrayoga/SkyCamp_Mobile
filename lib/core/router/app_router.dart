@@ -24,11 +24,14 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 // Notifier untuk refresh router
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(Ref ref) {
-    ref.listen(authProvider, (_, newState) {
-      // Only refresh router on auth state changes that affect navigation
-      if (newState.status == AuthStatus.authenticated ||
-          newState.status == AuthStatus.unauthenticated) {
+    ref.listen(authProvider, (previousState, newState) {
+      print('ROUTER DEBUG: Auth State Changed: ${previousState?.status} -> ${newState.status}');
+      // Only refresh router if the STATUS changes
+      if (previousState?.status != newState.status) {
+        print('ROUTER DEBUG: Status changed, notifying listeners!');
         notifyListeners();
+      } else {
+        print('ROUTER DEBUG: Status unchanged, SKIPPING refresh.');
       }
     });
   }
@@ -37,7 +40,8 @@ class RouterRefreshNotifier extends ChangeNotifier {
 final routerRefreshProvider = Provider((ref) => RouterRefreshNotifier(ref));
 
 final routerProvider = Provider<GoRouter>((ref) {
-  final authState = ref.watch(authProvider);
+  // DON'T watch authProvider here, otherwise the router gets recreated on every error message change!
+  // final authState = ref.watch(authProvider); 
   final refreshNotifier = ref.watch(routerRefreshProvider);
 
   return GoRouter(
@@ -45,6 +49,7 @@ final routerProvider = Provider<GoRouter>((ref) {
     initialLocation: '/splash',
     refreshListenable: refreshNotifier,
     redirect: (context, state) {
+      final authState = ref.read(authProvider); // Read latest state dynamically
       final isLoggedIn = authState.status == AuthStatus.authenticated;
       final isAuthRoute =
           state.matchedLocation == '/login' ||
@@ -52,16 +57,22 @@ final routerProvider = Provider<GoRouter>((ref) {
           state.matchedLocation == '/forgot-password';
       final isSplash = state.matchedLocation == '/splash';
 
+      print('ROUTER DEBUG: Redirect Check inside ${state.matchedLocation}');
+      print('ROUTER DEBUG: AuthStatus: ${authState.status}, isLoggedIn: $isLoggedIn');
+
       if (isSplash) return null;
 
       if (!isLoggedIn && !isAuthRoute) {
+        print('ROUTER DEBUG: Not logged in, redirecting to /login');
         return '/login';
       }
 
       if (isLoggedIn && isAuthRoute) {
+        print('ROUTER DEBUG: Logged in, redirecting to /home');
         return '/home';
       }
 
+      print('ROUTER DEBUG: No redirect needed.');
       return null;
     },
     routes: [

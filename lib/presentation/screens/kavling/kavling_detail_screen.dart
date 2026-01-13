@@ -37,23 +37,72 @@ class _KavlingDetailScreenState extends ConsumerState<KavlingDetailScreen> {
                   slivers: [
                     // App Bar with Image
                     SliverAppBar(
-                      expandedHeight: 250,
+                      expandedHeight: 280,
                       pinned: true,
+                      backgroundColor: AppColors.primary,
                       flexibleSpace: FlexibleSpaceBar(
-                        title: Text(kavling.nama),
-                        background: kavling.gambar != null
-                            ? CachedNetworkImage(
-                                imageUrl: kavling.gambar!,
-                                fit: BoxFit.cover,
-                              )
-                            : Container(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                child: const Icon(
-                                  Icons.landscape,
-                                  size: 80,
-                                  color: AppColors.primary,
+                        titlePadding: const EdgeInsets.only(left: 16, bottom: 16, right: 48),
+                        title: Text(
+                          kavling.nama,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 20,
+                            shadows: [
+                              Shadow(
+                                offset: Offset(0, 1),
+                                blurRadius: 4,
+                                color: Colors.black54,
+                              ),
+                            ],
+                          ),
+                        ),
+                        background: Stack(
+                          fit: StackFit.expand,
+                          children: [
+                            kavling.gambar != null
+                                ? CachedNetworkImage(
+                                    imageUrl: kavling.gambar!,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      color: AppColors.primary.withValues(alpha: 0.2),
+                                      child: const Center(
+                                        child: CircularProgressIndicator(),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) => Container(
+                                      color: AppColors.primary.withValues(alpha: 0.2),
+                                      child: const Icon(
+                                        Icons.landscape,
+                                        size: 80,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                  )
+                                : Container(
+                                    color: AppColors.primary.withValues(alpha: 0.2),
+                                    child: const Icon(
+                                      Icons.landscape,
+                                      size: 80,
+                                      color: AppColors.primary,
+                                    ),
+                                  ),
+                            // Gradient overlay for better text readability
+                            Container(
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  begin: Alignment.topCenter,
+                                  end: Alignment.bottomCenter,
+                                  colors: [
+                                    Colors.transparent,
+                                    Colors.black.withValues(alpha: 0.7),
+                                  ],
+                                  stops: const [0.5, 1.0],
                                 ),
                               ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                     // Content

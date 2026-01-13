@@ -37,11 +37,35 @@ class KavlingNotifier extends StateNotifier<KavlingState> {
 
   KavlingNotifier() : super(const KavlingState());
 
-  Future<void> loadKavlings({DateTime? checkIn, DateTime? checkOut}) async {
-    state = state.copyWith(isLoading: true, error: null);
-    
+  DateTime? _lastFetch;
+  static const _cacheDuration = Duration(minutes: 5);
+
+  Future<void> loadKavlings({
+    DateTime? checkIn,
+    DateTime? checkOut,
+    bool forceRefresh = false,
+    bool silent = false,
+  }) async {
+    // Skip if already loaded and cache is still valid (unless forced)
+    if (!forceRefresh &&
+        state.kavlings.isNotEmpty &&
+        _lastFetch != null &&
+        DateTime.now().difference(_lastFetch!) < _cacheDuration &&
+        checkIn == null &&
+        checkOut == null) {
+      return;
+    }
+
+    if (!silent) {
+       state = state.copyWith(isLoading: true, error: null);
+    }
+
     try {
-      final kavlings = await _repository.getAll(checkIn: checkIn, checkOut: checkOut);
+      final kavlings = await _repository.getAll(
+        checkIn: checkIn,
+        checkOut: checkOut,
+      );
+      _lastFetch = DateTime.now();
       state = state.copyWith(kavlings: kavlings, isLoading: false);
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
@@ -50,7 +74,7 @@ class KavlingNotifier extends StateNotifier<KavlingState> {
 
   Future<void> loadKavlingDetail(int id) async {
     state = state.copyWith(isLoading: true, error: null);
-    
+
     try {
       final kavling = await _repository.getById(id);
       state = state.copyWith(selectedKavling: kavling, isLoading: false);
@@ -59,11 +83,13 @@ class KavlingNotifier extends StateNotifier<KavlingState> {
     }
   }
 
-  List<Kavling> get availableKavlings => 
+  List<Kavling> get availableKavlings =>
       state.kavlings.where((k) => k.isAvailable).toList();
 }
 
 // Provider
-final kavlingProvider = StateNotifierProvider<KavlingNotifier, KavlingState>((ref) {
+final kavlingProvider = StateNotifierProvider<KavlingNotifier, KavlingState>((
+  ref,
+) {
   return KavlingNotifier();
 });
