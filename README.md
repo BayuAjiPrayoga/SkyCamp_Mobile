@@ -185,6 +185,19 @@ lib/
 -   QR Code for check-in
 -   Booking status tracking
 
+---
+
+## 📂 Repository Terkait
+
+| Repository                                                               | Deskripsi                         |
+| :----------------------------------------------------------------------- | :-------------------------------- |
+| [LuhurCamp-Web-App](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App) | Backend Laravel + Web Admin Panel |
+| [SkyCamp_Mobile](https://github.com/BayuAjiPrayoga/SkyCamp_Mobile)       | Aplikasi Mobile Flutter           |
+
+---
+
+## 🤝 Contributing
+
 1. Fork repository
 2. Create feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit changes (`git commit -m 'Add AmazingFeature'`)
