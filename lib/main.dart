@@ -9,16 +9,30 @@ import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  
+  // 1. Initialize Firebase first (Critical)
+  try {
+    await Firebase.initializeApp();
+    // Background handler must be registered right after initialization
+    FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  } catch (e) {
+    debugPrint('Firebase init failed: $e');
+  }
 
-  // Setup background message handler
-  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  // 2. Initialize Notification Service
+  try {
+    await notificationService.initialize();
+  } catch (e) {
+    debugPrint('Notification Service init failed: $e');
+  }
 
-  // Initialize notification service
-  await notificationService.initialize();
-
-  // Subscribe to announcements topic
-  await notificationService.subscribeToTopic('announcements');
+  // 3. Subscribe to Announcements (Independent)
+  try {
+    await notificationService.subscribeToTopic('announcements');
+    debugPrint('FCM_TOPIC: Subscribed to announcements');
+  } catch (e) {
+    debugPrint('FCM_TOPIC: Subscription failed: $e');
+  }
 
   await initializeDateFormatting('id_ID', null);
   runApp(const ProviderScope(child: LuhurCampApp()));

@@ -13,6 +13,8 @@ class SplashScreen extends ConsumerStatefulWidget {
 
 class _SplashScreenState extends ConsumerState<SplashScreen> {
   bool _hasNavigated = false;
+  int _retryCount = 0;
+  static const int _maxRetries = 10; // 10 x 500ms = 5 seconds max wait
 
   @override
   void initState() {
@@ -34,9 +36,18 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
     final authState = ref.read(authProvider);
     
     
-    // If still loading, wait for auth check to complete
+    // If still loading, wait for auth check to complete (with timeout)
     if (authState.status == AuthStatus.loading || 
         authState.status == AuthStatus.initial) {
+      _retryCount++;
+      
+      // Force navigate to login after max retries (timeout)
+      if (_retryCount >= _maxRetries) {
+        _hasNavigated = true;
+        context.go('/login');
+        return;
+      }
+      
       // Listen for auth state changes
       Future.delayed(const Duration(milliseconds: 500), () {
         if (mounted && !_hasNavigated) {

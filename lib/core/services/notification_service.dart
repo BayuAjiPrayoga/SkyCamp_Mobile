@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
@@ -214,7 +215,7 @@ class NotificationService {
 
       await apiClient.put('/user/fcm-token', data: {'fcm_token': token});
       return true;
-    } catch (_) {
+    } catch (e) {
       return false;
     }
   }
