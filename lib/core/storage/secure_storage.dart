@@ -1,20 +1,21 @@
-import 'package:flutter/foundation.dart';
+// Secure Storage - Penyimpanan aman untuk token
+// Mobile: FlutterSecureStorage, Web: SharedPreferences
+
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Platform-aware secure storage wrapper
-/// Uses SharedPreferences for Web (flutter_secure_storage has limited web support)
-/// Uses FlutterSecureStorage for mobile platforms
 class SecureStorage {
-  static const String _tokenKey = 'auth_token';
-  
   final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
   SharedPreferences? _prefs;
   
+  static const String _tokenKey = 'auth_token';
+
   Future<void> _initPrefs() async {
     _prefs ??= await SharedPreferences.getInstance();
   }
-  
+
+  // Generic write
   Future<void> write({required String key, required String? value}) async {
     if (kIsWeb) {
       await _initPrefs();
@@ -27,7 +28,8 @@ class SecureStorage {
       await _secureStorage.write(key: key, value: value);
     }
   }
-  
+
+  // Generic read
   Future<String?> read({required String key}) async {
     if (kIsWeb) {
       await _initPrefs();
@@ -36,7 +38,8 @@ class SecureStorage {
       return await _secureStorage.read(key: key);
     }
   }
-  
+
+  // Generic delete
   Future<void> delete({required String key}) async {
     if (kIsWeb) {
       await _initPrefs();
@@ -45,25 +48,10 @@ class SecureStorage {
       await _secureStorage.delete(key: key);
     }
   }
-  
-  // Convenience methods for auth token
-  Future<void> saveToken(String token) async {
-    await write(key: _tokenKey, value: token);
-  }
-  
-  Future<String?> getToken() async {
-    return await read(key: _tokenKey);
-  }
-  
-  Future<void> clearToken() async {
-    await delete(key: _tokenKey);
-  }
-  
-  Future<bool> hasToken() async {
-    final token = await getToken();
-    return token != null && token.isNotEmpty;
-  }
-}
 
-// Singleton instance
-final secureStorage = SecureStorage();
+  // Token-specific methods
+  Future<void> saveToken(String token) => write(key: _tokenKey, value: token);
+  Future<String?> getToken() => read(key: _tokenKey);
+  Future<void> deleteToken() => delete(key: _tokenKey);
+  Future<bool> hasToken() async => (await getToken()) != null;
+}

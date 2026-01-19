@@ -1,33 +1,23 @@
+// Announcement Provider - State management pengumuman dengan caching
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/announcement_model.dart';
 import '../../data/repositories/announcement_repository.dart';
 
-// State
 class AnnouncementState {
   final List<Announcement> announcements;
   final bool isLoading;
   final String? error;
 
-  AnnouncementState({
-    this.announcements = const [],
-    this.isLoading = false,
-    this.error,
-  });
+  AnnouncementState({this.announcements = const [], this.isLoading = false, this.error});
 
-  AnnouncementState copyWith({
-    List<Announcement>? announcements,
-    bool? isLoading,
-    String? error,
-  }) {
-    return AnnouncementState(
-      announcements: announcements ?? this.announcements,
-      isLoading: isLoading ?? this.isLoading,
-      error: error,
-    );
-  }
+  AnnouncementState copyWith({List<Announcement>? announcements, bool? isLoading, String? error}) => AnnouncementState(
+    announcements: announcements ?? this.announcements,
+    isLoading: isLoading ?? this.isLoading,
+    error: error,
+  );
 }
 
-// Notifier
 class AnnouncementNotifier extends StateNotifier<AnnouncementState> {
   final AnnouncementRepository _repository;
   DateTime? _lastFetch;
@@ -36,10 +26,8 @@ class AnnouncementNotifier extends StateNotifier<AnnouncementState> {
   AnnouncementNotifier(this._repository) : super(AnnouncementState());
 
   Future<void> loadAnnouncements({bool forceRefresh = false}) async {
-    // Skip if already loaded and cache is still valid
-    if (!forceRefresh &&
-        state.announcements.isNotEmpty &&
-        _lastFetch != null &&
+    // Cache check
+    if (!forceRefresh && state.announcements.isNotEmpty && _lastFetch != null &&
         DateTime.now().difference(_lastFetch!) < _cacheDuration) {
       return;
     }
@@ -55,9 +43,7 @@ class AnnouncementNotifier extends StateNotifier<AnnouncementState> {
   }
 }
 
-// Provider
-final announcementProvider =
-    StateNotifierProvider<AnnouncementNotifier, AnnouncementState>((ref) {
-      final repository = ref.watch(announcementRepositoryProvider);
-      return AnnouncementNotifier(repository);
-    });
+final announcementProvider = StateNotifierProvider<AnnouncementNotifier, AnnouncementState>((ref) {
+  final repository = ref.watch(announcementRepositoryProvider);
+  return AnnouncementNotifier(repository);
+});

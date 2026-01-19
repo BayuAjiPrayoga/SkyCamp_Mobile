@@ -1,3 +1,5 @@
+// Kavling Model - Data slot/area camping
+
 class Kavling {
   final int id;
   final String nama;
@@ -22,7 +24,6 @@ class Kavling {
   });
 
   factory Kavling.fromJson(Map<String, dynamic> json) {
-    // Safe int parsing - handles int, String, double, and decimal strings like "150000.00"
     int safeParseInt(dynamic value) {
       if (value == null) return 0;
       if (value is int) return value;
@@ -48,29 +49,20 @@ class Kavling {
       return [];
     }
 
-    final harga = safeParseInt(json['harga_per_malam']);
-    
     return Kavling(
       id: safeParseInt(json['id']),
       nama: json['nama']?.toString() ?? '',
       kapasitas: safeParseInt(json['kapasitas']),
-      hargaPerMalam: harga,
+      hargaPerMalam: safeParseInt(json['harga_per_malam']),
       fasilitas: parseFasilitas(json['fasilitas']),
       status: json['status']?.toString() ?? 'tersedia',
       gambar: json['gambar_url']?.toString() ?? json['gambar']?.toString(),
       deskripsi: json['deskripsi']?.toString(),
-      // Use explicit availability if present, otherwise fallback to status check
       isAvailable: json['is_available'] ?? (json['status'] == 'aktif'),
     );
   }
 
-  // API uses 'aktif' for available kavlings, but now we respect isAvailable
-  // bool get isAvailable => status == 'aktif';
-
-  String get formattedPrice {
-    return 'Rp ${hargaPerMalam.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    )}';
-  }
+  String get formattedPrice => 'Rp ${hargaPerMalam.toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.',
+  )}';
 }

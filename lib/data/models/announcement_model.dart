@@ -1,3 +1,4 @@
+// Announcement Model - Data pengumuman dari admin
 
 class Announcement {
   final int id;
@@ -23,8 +24,7 @@ class Announcement {
       content: json['content'],
       type: json['type'] ?? 'info',
       isActive: json['is_active'] == 1 || json['is_active'] == true,
-      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? 
-          DateTime.now(),
+      createdAt: DateTime.tryParse(json['created_at']?.toString() ?? '') ?? DateTime.now(),
     );
   }
 }

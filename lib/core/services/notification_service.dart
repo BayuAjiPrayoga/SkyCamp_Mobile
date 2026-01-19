@@ -1,44 +1,39 @@
+// Notification Service - Firebase Cloud Messaging & Local Notifications
+// Handle push notifications: permission, token sync, foreground/background messages
+
 import 'dart:io';
-import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:go_router/go_router.dart';
 import '../network/api_client.dart';
 import '../router/app_router.dart';
 
-/// Background message handler - must be top-level function
+// Top-level handler untuk background messages (harus di luar class)
 @pragma('vm:entry-point')
 Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // Handle background message silently
+  // Handle silently - sistem akan tampilkan notification otomatis
 }
 
 class NotificationService {
+  // Singleton pattern
   static final NotificationService _instance = NotificationService._internal();
   factory NotificationService() => _instance;
   NotificationService._internal();
 
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
-  final FlutterLocalNotificationsPlugin _localNotifications =
-      FlutterLocalNotificationsPlugin();
-
+  final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
+  
   String? _fcmToken;
   String? get fcmToken => _fcmToken;
 
-  /// Initialize notification service
+  // Inisialisasi service
   Future<void> initialize() async {
-    // Request permission
     await _requestPermission();
-
-    // Initialize local notifications for foreground
     await _initializeLocalNotifications();
-
-    // Get FCM token
     await _getFCMToken();
-
-    // Auto-sync FCM token to backend if user is logged in
     await sendTokenToBackend(_fcmToken);
 
-    // Listen for token refresh
+    // Listen token refresh
     _messaging.onTokenRefresh.listen((token) async {
       _fcmToken = token;
       await sendTokenToBackend(token);
@@ -46,18 +41,18 @@ class NotificationService {
 
     // Handle foreground messages
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // Handle notification tap when app is in background
+    
+    // Handle notification tap (background)
     FirebaseMessaging.onMessageOpenedApp.listen(_handleNotificationTap);
-
-    // Check if app was opened from a notification
+    
+    // Handle notification tap (terminated)
     final initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
       _handleNotificationTap(initialMessage);
     }
   }
 
-  /// Request notification permission
+  // Request notification permission
   Future<void> _requestPermission() async {
     await _messaging.requestPermission(
       alert: true,
@@ -67,30 +62,20 @@ class NotificationService {
     );
   }
 
-  /// Initialize local notifications for foreground display
+  // Setup local notifications untuk foreground display
   Future<void> _initializeLocalNotifications() async {
-    const androidSettings = AndroidInitializationSettings(
-      '@mipmap/ic_launcher',
-    );
+    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
       requestSoundPermission: true,
     );
 
-    const initSettings = InitializationSettings(
-      android: androidSettings,
-      iOS: iosSettings,
-    );
+    const initSettings = InitializationSettings(android: androidSettings, iOS: iosSettings);
 
-    await _localNotifications.initialize(
-      initSettings,
-      onDidReceiveNotificationResponse: (response) {
-        // Handle local notification tap if needed
-      },
-    );
+    await _localNotifications.initialize(initSettings, onDidReceiveNotificationResponse: (_) {});
 
-    // Create notification channel for Android
+    // Create Android notification channels
     if (Platform.isAndroid) {
       const channel = AndroidNotificationChannel(
         'luhurcamp_channel',
@@ -102,23 +87,19 @@ class NotificationService {
       const alertChannel = AndroidNotificationChannel(
         'luhurcamp_alert_channel',
         'LuhurCamp Alerts',
-        description: 'Notifikasi penting dengan suara khusus',
+        description: 'Notifikasi penting',
         importance: Importance.max,
         sound: RawResourceAndroidNotificationSound('luhur_alert'),
         playSound: true,
       );
 
-      final flutterLocalNotificationsPlugin = _localNotifications
-          .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
-          >();
-          
-      await flutterLocalNotificationsPlugin?.createNotificationChannel(channel);
-      await flutterLocalNotificationsPlugin?.createNotificationChannel(alertChannel);
+      final plugin = _localNotifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      await plugin?.createNotificationChannel(channel);
+      await plugin?.createNotificationChannel(alertChannel);
     }
   }
 
-  /// Get FCM token
+  // Get FCM token
   Future<String?> _getFCMToken() async {
     try {
       _fcmToken = await _messaging.getToken();
@@ -128,7 +109,7 @@ class NotificationService {
     }
   }
 
-  /// Handle foreground message - show local notification
+  // Handle foreground message - tampilkan via local notification
   void _handleForegroundMessage(RemoteMessage message) {
     final notification = message.notification;
     if (notification != null) {
@@ -140,9 +121,10 @@ class NotificationService {
     }
   }
 
-  /// Handle notification tap
+  // Handle notification tap - navigate ke halaman yang sesuai
   void _handleNotificationTap(RemoteMessage message) {
     final data = message.data;
+    
     if (data.containsKey('booking_id')) {
       final bookingId = int.tryParse(data['booking_id'].toString());
       if (bookingId != null) {
@@ -153,16 +135,16 @@ class NotificationService {
     }
   }
 
-  /// Show local notification
+  // Show local notification
   Future<void> _showLocalNotification({
     required String title,
     required String body,
     String? payload,
   }) async {
     const androidDetails = AndroidNotificationDetails(
-      'luhurcamp_alert_channel', // New channel ID for custom sound
+      'luhurcamp_alert_channel',
       'LuhurCamp Alerts',
-      channelDescription: 'Notifikasi penting dengan suara khusus',
+      channelDescription: 'Notifikasi penting',
       importance: Importance.max,
       priority: Priority.high,
       icon: '@mipmap/ic_launcher',
@@ -174,13 +156,10 @@ class NotificationService {
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
-      sound: 'luhur_alert.aiff', // iOS requires .aiff, .wav, or .caf
+      sound: 'luhur_alert.aiff',
     );
 
-    const details = NotificationDetails(
-      android: androidDetails,
-      iOS: iosDetails,
-    );
+    const details = NotificationDetails(android: androidDetails, iOS: iosDetails);
 
     await _localNotifications.show(
       DateTime.now().millisecondsSinceEpoch ~/ 1000,
@@ -191,45 +170,33 @@ class NotificationService {
     );
   }
 
-  /// Subscribe to topic (e.g., 'announcements')
-  Future<void> subscribeToTopic(String topic) async {
-    await _messaging.subscribeToTopic(topic);
-  }
+  // Subscribe/unsubscribe topics
+  Future<void> subscribeToTopic(String topic) => _messaging.subscribeToTopic(topic);
+  Future<void> unsubscribeFromTopic(String topic) => _messaging.unsubscribeFromTopic(topic);
 
-  /// Unsubscribe from topic
-  Future<void> unsubscribeFromTopic(String topic) async {
-    await _messaging.unsubscribeFromTopic(topic);
-  }
-
-  /// Send FCM token to backend for push notification targeting
+  // Sync FCM token ke backend
   Future<bool> sendTokenToBackend(String? token) async {
-    if (token == null || token.isEmpty) {
-      return false;
-    }
+    if (token == null || token.isEmpty) return false;
 
     try {
       final hasToken = await apiClient.hasToken();
-      if (!hasToken) {
-        return false;
-      }
+      if (!hasToken) return false;
 
       await apiClient.put('/user/fcm-token', data: {'fcm_token': token});
       return true;
-    } catch (e) {
+    } catch (_) {
       return false;
     }
   }
 
-  /// Remove FCM token from backend (on logout)
+  // Hapus FCM token dari backend (saat logout)
   Future<void> removeTokenFromBackend() async {
     try {
       await apiClient.delete('/user/fcm-token');
-    } catch (_) {
-      // Ignore errors on logout
-    }
+    } catch (_) {}
   }
 
-  /// Get current FCM token and optionally sync to backend
+  // Get fresh token dan sync
   Future<String?> getTokenAndSync() async {
     _fcmToken = await _messaging.getToken();
     if (_fcmToken != null) {

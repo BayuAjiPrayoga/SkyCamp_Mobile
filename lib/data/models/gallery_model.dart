@@ -1,3 +1,5 @@
+// Gallery Model - Data foto galeri
+
 class GalleryPhoto {
   final int id;
   final int? userId;

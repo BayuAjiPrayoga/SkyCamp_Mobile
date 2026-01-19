@@ -1,10 +1,13 @@
+// HTTP Client wrapper menggunakan Dio
+// Dengan interceptor untuk auto-attach auth token
+
 import 'package:dio/dio.dart';
 import '../config/api_config.dart';
 import '../storage/secure_storage.dart';
 
 class ApiClient {
   late Dio _dio;
-  final SecureStorage _storage = secureStorage;
+  final SecureStorage _storage = SecureStorage();
 
   ApiClient() {
     _dio = Dio(BaseOptions(
@@ -17,9 +20,9 @@ class ApiClient {
       },
     ));
 
+    // Interceptor untuk auto-attach Bearer token
     _dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
-        // Add auth token to requests
         final token = await _storage.getToken();
         if (token != null) {
           options.headers['Authorization'] = 'Bearer $token';
@@ -27,58 +30,29 @@ class ApiClient {
         return handler.next(options);
       },
       onError: (error, handler) {
-        // Handle 401 Unauthorized
-        // Note: We disable this global check to prevent "clearing token" during failed login attempts
-        // which might cause the app to think it needs to re-auth/splash.
-        // if (error.response?.statusCode == 401) {
-        //   _storage.clearToken();
-        // }
         return handler.next(error);
       },
     ));
   }
 
-  // Auth methods
-  Future<void> saveToken(String token) async {
-    await _storage.saveToken(token);
-  }
-
-  Future<void> clearToken() async {
-    await _storage.clearToken();
-  }
-
-  Future<String?> getToken() async {
-    return await _storage.getToken();
-  }
-
-  Future<bool> hasToken() async {
-    return await _storage.hasToken();
-  }
+  // Token management
+  Future<void> saveToken(String token) => _storage.saveToken(token);
+  Future<void> clearToken() => _storage.deleteToken();
+  Future<bool> hasToken() => _storage.hasToken();
 
   // HTTP Methods
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
-    return await _dio.get(path, queryParameters: queryParameters);
-  }
-
-  Future<Response> post(String path, {dynamic data}) async {
-    return await _dio.post(path, data: data);
-  }
-
-  Future<Response> put(String path, {dynamic data}) async {
-    return await _dio.put(path, data: data);
-  }
-
-  Future<Response> delete(String path) async {
-    return await _dio.delete(path);
-  }
-
-  Future<Response> postFormData(String path, FormData formData) async {
-    return await _dio.post(
-      path,
-      data: formData,
-      options: Options(contentType: 'multipart/form-data'),
-    );
-  }
+  Future<Response> get(String path) => _dio.get(path);
+  
+  Future<Response> post(String path, {Map<String, dynamic>? data}) => 
+      _dio.post(path, data: data);
+  
+  Future<Response> put(String path, {Map<String, dynamic>? data}) => 
+      _dio.put(path, data: data);
+  
+  Future<Response> delete(String path) => _dio.delete(path);
+  
+  Future<Response> postFormData(String path, FormData formData) =>
+      _dio.post(path, data: formData);
 }
 
 // Singleton instance

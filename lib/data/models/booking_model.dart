@@ -1,3 +1,5 @@
+// Booking Model - Data pemesanan camping
+
 import 'kavling_model.dart';
 import 'peralatan_model.dart';
 
@@ -31,7 +33,6 @@ class Booking {
   });
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    // Safe int parsing - handles int, String, double, and decimal strings
     int safeParseInt(dynamic value) {
       if (value == null) return 0;
       if (value is int) return value;
@@ -54,59 +55,40 @@ class Booking {
       totalHarga: safeParseInt(json['total_harga']),
       status: json['status']?.toString() ?? 'pending',
       buktiPembayaran: json['bukti_pembayaran']?.toString(),
-      createdAt: json['created_at'] != null 
-          ? DateTime.tryParse(json['created_at'].toString()) 
-          : null,
-      kavling: json['kavling'] != null 
-          ? Kavling.fromJson(json['kavling']) 
-          : null,
+      createdAt: json['created_at'] != null ? DateTime.tryParse(json['created_at'].toString()) : null,
+      kavling: json['kavling'] != null ? Kavling.fromJson(json['kavling']) : null,
       items: json['items'] != null
           ? (json['items'] as List).map((e) => BookingItem.fromJson(e)).toList()
           : [],
     );
   }
 
-  String get formattedTotal {
-    return 'Rp ${totalHarga.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    )}';
-  }
+  // Computed getters
+  String get formattedTotal => 'Rp ${totalHarga.toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.',
+  )}';
 
   String get statusLabel {
-    // Handle legacy data where payment was uploaded but status not updated
-    if (status == 'pending' && buktiPembayaran != null) {
-      return 'Menunggu Verifikasi';
-    }
+    if (status == 'pending' && buktiPembayaran != null) return 'Menunggu Verifikasi';
     
     switch (status) {
-      case 'pending':
-        return 'Menunggu Pembayaran';
-      case 'waiting_confirmation':
-        return 'Menunggu Verifikasi';
-      case 'confirmed':
-        return 'Dikonfirmasi';
-      case 'checked_in':
-        return 'Checked In';
-      case 'cancelled':
-        return 'Dibatalkan';
-      case 'rejected':
-        return 'Ditolak';
-      case 'completed':
-        return 'Selesai';
-      default:
-        return status;
+      case 'pending': return 'Menunggu Pembayaran';
+      case 'waiting_confirmation': return 'Menunggu Verifikasi';
+      case 'confirmed': return 'Dikonfirmasi';
+      case 'checked_in': return 'Checked In';
+      case 'cancelled': return 'Dibatalkan';
+      case 'rejected': return 'Ditolak';
+      case 'completed': return 'Selesai';
+      default: return status;
     }
   }
 
-  int get totalNights {
-    return tanggalCheckOut.difference(tanggalCheckIn).inDays;
-  }
-
+  int get totalNights => tanggalCheckOut.difference(tanggalCheckIn).inDays;
   bool get canUploadPayment => status == 'pending' && buktiPembayaran == null;
   bool get canCancel => status == 'pending';
 }
 
+// Item peralatan dalam booking
 class BookingItem {
   final int id;
   final int bookingId;
@@ -143,9 +125,7 @@ class BookingItem {
       peralatanId: safeParseInt(json['peralatan_id']),
       jumlah: safeParseInt(json['jumlah']),
       harga: safeParseInt(json['harga']),
-      peralatan: json['peralatan'] != null 
-          ? Peralatan.fromJson(json['peralatan']) 
-          : null,
+      peralatan: json['peralatan'] != null ? Peralatan.fromJson(json['peralatan']) : null,
     );
   }
 

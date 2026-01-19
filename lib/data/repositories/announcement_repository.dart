@@ -1,8 +1,9 @@
+// Announcement Repository - Akses data pengumuman
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/network/api_client.dart';
 import '../../core/config/api_config.dart';
 import '../models/announcement_model.dart';
-
 
 final announcementRepositoryProvider = Provider<AnnouncementRepository>((ref) {
   return AnnouncementRepository(apiClient);

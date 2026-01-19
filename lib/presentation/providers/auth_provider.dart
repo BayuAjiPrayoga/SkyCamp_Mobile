@@ -1,10 +1,11 @@
+// Auth Provider - State management autentikasi
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/user_model.dart';
 import '../../data/repositories/auth_repository.dart';
 
 export '../../data/repositories/auth_repository.dart' show UpdateProfileResult;
 
-// Auth State
 enum AuthStatus { initial, loading, authenticated, unauthenticated, error, loginSuccess }
 
 class AuthState {
@@ -12,22 +13,15 @@ class AuthState {
   final User? user;
   final String? errorMessage;
 
-  const AuthState({
-    this.status = AuthStatus.initial,
-    this.user,
-    this.errorMessage,
-  });
+  const AuthState({this.status = AuthStatus.initial, this.user, this.errorMessage});
 
-  AuthState copyWith({AuthStatus? status, User? user, String? errorMessage}) {
-    return AuthState(
-      status: status ?? this.status,
-      user: user ?? this.user,
-      errorMessage: errorMessage,
-    );
-  }
+  AuthState copyWith({AuthStatus? status, User? user, String? errorMessage}) => AuthState(
+    status: status ?? this.status,
+    user: user ?? this.user,
+    errorMessage: errorMessage,
+  );
 }
 
-// Auth Notifier
 class AuthNotifier extends StateNotifier<AuthState> {
   final AuthRepository _repository = authRepository;
 
@@ -37,7 +31,6 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> checkAuthStatus() async {
     state = state.copyWith(status: AuthStatus.loading);
-
     try {
       final isLoggedIn = await _repository.isLoggedIn();
       if (isLoggedIn) {
@@ -47,64 +40,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
           return;
         }
       }
-
       state = state.copyWith(status: AuthStatus.unauthenticated);
-    } catch (e) {
-      // On any error, default to unauthenticated (show login)
+    } catch (_) {
       state = state.copyWith(status: AuthStatus.unauthenticated);
     }
   }
 
   Future<bool> login(String email, String password) async {
-    // Note: Local loading is handled by UI (LoginScreen) to avoid redirects
-    // state = state.copyWith(status: AuthStatus.loading);
-
     final result = await _repository.login(email, password);
-
     if (result.isSuccess) {
-      state = state.copyWith(
-        // Keep status as-is (unauthenticated) to prevent router refresh/redirect during animation
-        // status: AuthStatus.loginSuccess, 
-        user: result.user,
-      );
+      state = state.copyWith(user: result.user);
       return true;
     }
-
-    state = state.copyWith(
-      // status: AuthStatus.error, <--- OLD
-      status: state.status, // Keep current status to prevent router rebuild/green screen
-      errorMessage: result.message,
-    );
+    state = state.copyWith(status: state.status, errorMessage: result.message);
     return false;
   }
 
   Future<bool> loginWithGoogle() async {
-    // Note: Local loading is handled by UI
-    // state = state.copyWith(status: AuthStatus.loading);
-
     final result = await _repository.loginWithGoogle();
-
     if (result.isSuccess) {
-      state = state.copyWith(
-        // Keep status as-is (unauthenticated) to allow animation to finish
-        // status: AuthStatus.loginSuccess,
-        user: result.user,
-      );
+      state = state.copyWith(user: result.user);
       return true;
     }
-
-    state = state.copyWith(
-      // status: AuthStatus.error,
-      status: state.status, // Keep current status
-      errorMessage: result.message,
-    );
+    state = state.copyWith(status: state.status, errorMessage: result.message);
     return false;
   }
 
-  void finalizeLogin() {
-    // Called by UI after success animation is complete
-    state = state.copyWith(status: AuthStatus.authenticated);
-  }
+  void finalizeLogin() => state = state.copyWith(status: AuthStatus.authenticated);
 
   Future<bool> register({
     required String name,
@@ -114,28 +76,15 @@ class AuthNotifier extends StateNotifier<AuthState> {
     String? phone,
   }) async {
     state = state.copyWith(status: AuthStatus.loading);
-
     final result = await _repository.register(
-      name: name,
-      email: email,
-      password: password,
-      passwordConfirmation: passwordConfirmation,
-      phone: phone,
+      name: name, email: email, password: password, 
+      passwordConfirmation: passwordConfirmation, phone: phone,
     );
-
     if (result.isSuccess) {
-      state = state.copyWith(
-        status: AuthStatus.authenticated, // Register creates session immediately
-        user: result.user,
-      );
+      state = state.copyWith(status: AuthStatus.authenticated, user: result.user);
       return true;
     }
-
-    state = state.copyWith(
-      // status: AuthStatus.error,
-      status: state.status, // Keep current status
-      errorMessage: result.message,
-    );
+    state = state.copyWith(status: state.status, errorMessage: result.message);
     return false;
   }
 
@@ -145,36 +94,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthState(status: AuthStatus.unauthenticated);
   }
 
-  /// Refresh user data from backend
   Future<void> refreshUser() async {
     final user = await _repository.getUser();
-    if (user != null) {
-      state = state.copyWith(user: user);
-    }
+    if (user != null) state = state.copyWith(user: user);
   }
 
-  Future<UpdateProfileResult> updateProfile({
-    required String name,
-    String? phone,
-  }) async {
+  Future<UpdateProfileResult> updateProfile({required String name, String? phone}) async {
     final result = await _repository.updateProfile(name: name, phone: phone);
-
-    if (result.isSuccess && result.user != null) {
-      state = state.copyWith(user: result.user);
-    }
-
+    if (result.isSuccess && result.user != null) state = state.copyWith(user: result.user);
     return result;
   }
 
   Future<AuthResult> updateAvatar(String imagePath) async {
-    // Note: We don't set global loading here to avoid full screen loader
-    // Local loading state should be handled by the UI
     final result = await _repository.updateAvatar(imagePath);
-
-    if (result.isSuccess && result.user != null) {
-      state = state.copyWith(user: result.user);
-    }
-
+    if (result.isSuccess && result.user != null) state = state.copyWith(user: result.user);
     return result;
   }
 
@@ -182,43 +115,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String currentPassword,
     required String newPassword,
     required String confirmPassword,
-  }) async {
-    return await _repository.changePassword(
-      currentPassword: currentPassword,
-      newPassword: newPassword,
-      confirmPassword: confirmPassword,
-    );
-  }
+  }) => _repository.changePassword(
+    currentPassword: currentPassword, newPassword: newPassword, confirmPassword: confirmPassword,
+  );
 
-  void clearError() {
-    state = state.copyWith(
-      status: state.user != null
-          ? AuthStatus.authenticated
-          : AuthStatus.unauthenticated,
-      errorMessage: null,
-    );
-  }
+  void clearError() => state = state.copyWith(
+    status: state.user != null ? AuthStatus.authenticated : AuthStatus.unauthenticated,
+    errorMessage: null,
+  );
 
   Future<bool> forgotPassword(String email) async {
     state = state.copyWith(status: AuthStatus.loading);
-
     final result = await _repository.sendPasswordResetEmail(email);
-
     if (result.isSuccess) {
-      state = state.copyWith(
-          status: AuthStatus.unauthenticated); // Reset to idle
+      state = state.copyWith(status: AuthStatus.unauthenticated);
       return true;
     }
-
-    state = state.copyWith(
-      status: AuthStatus.error,
-      errorMessage: result.message,
-    );
+    state = state.copyWith(status: AuthStatus.error, errorMessage: result.message);
     return false;
   }
 }
 
-// Provider
-final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
-  return AuthNotifier();
-});
+final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) => AuthNotifier());

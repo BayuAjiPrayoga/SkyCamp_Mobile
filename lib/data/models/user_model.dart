@@ -1,3 +1,5 @@
+// User Model - Representasi data pengguna
+
 class User {
   final int id;
   final String name;
@@ -5,6 +7,7 @@ class User {
   final String? phone;
   final String? avatar;
   final DateTime? createdAt;
+  final String? authProvider;
 
   User({
     required this.id,
@@ -16,16 +19,10 @@ class User {
     this.authProvider,
   });
 
-  final String? authProvider;
+  // Empty user untuk default/placeholder
+  factory User.empty() => User(id: 0, name: '', email: '');
 
-  factory User.empty() {
-    return User(
-      id: 0,
-      name: '',
-      email: '',
-    );
-  }
-
+  // Parse dari JSON API
   factory User.fromJson(Map<String, dynamic> json) {
     int safeParseInt(dynamic value) {
       if (value == null) return 0;
@@ -52,13 +49,12 @@ class User {
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-      'phone': phone,
-      'avatar': avatar,
-    };
-  }
+  // Serialize ke JSON
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'name': name,
+    'email': email,
+    'phone': phone,
+    'avatar': avatar,
+  };
 }

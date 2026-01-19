@@ -1,3 +1,5 @@
+// Peralatan Model - Data peralatan camping untuk disewa
+
 class Peralatan {
   final int id;
   final String nama;
@@ -20,7 +22,6 @@ class Peralatan {
   });
 
   factory Peralatan.fromJson(Map<String, dynamic> json) {
-    // Safe int parsing - handles int, String, double, and decimal strings
     int safeParseInt(dynamic value) {
       if (value == null) return 0;
       if (value is int) return value;
@@ -47,23 +48,16 @@ class Peralatan {
 
   bool get isAvailable => stokTotal > 0 && kondisi == 'baik';
 
-  String get formattedPrice {
-    return 'Rp ${hargaSewa.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]}.',
-    )}';
-  }
+  String get formattedPrice => 'Rp ${hargaSewa.toString().replaceAllMapped(
+    RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]}.',
+  )}';
 
   String get kondisiLabel {
     switch (kondisi) {
-      case 'baik':
-        return 'Tersedia';
-      case 'perlu_perbaikan':
-        return 'Maintenance';
-      case 'rusak':
-        return 'Tidak Tersedia';
-      default:
-        return kondisi;
+      case 'baik': return 'Tersedia';
+      case 'perlu_perbaikan': return 'Maintenance';
+      case 'rusak': return 'Tidak Tersedia';
+      default: return kondisi;
     }
   }
 }

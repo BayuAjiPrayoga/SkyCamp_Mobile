@@ -1,3 +1,6 @@
+// App Router - Konfigurasi navigasi dengan GoRouter
+// Auto-redirect berdasarkan auth state, bottom navigation dengan StatefulShellRoute
+
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -18,20 +21,15 @@ import '../../presentation/screens/announcement/announcement_list_screen.dart';
 import '../../presentation/providers/auth_provider.dart';
 import '../../presentation/widgets/main_shell.dart';
 
-/// Global navigator key for navigation from outside widget tree (e.g. notifications)
+// Global key untuk navigasi dari luar widget tree (contoh: notification tap)
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-// Notifier untuk refresh router
+// Notifier untuk trigger router refresh saat auth state berubah
 class RouterRefreshNotifier extends ChangeNotifier {
   RouterRefreshNotifier(Ref ref) {
-    ref.listen(authProvider, (previousState, newState) {
-      // print('ROUTER DEBUG: Auth State Changed: ${previousState?.status} -> ${newState.status}');
-      // Only refresh router if the STATUS changes
-      if (previousState?.status != newState.status) {
-        // print('ROUTER DEBUG: Status changed, notifying listeners!');
+    ref.listen(authProvider, (prev, next) {
+      if (prev?.status != next.status) {
         notifyListeners();
-      } else {
-        // print('ROUTER DEBUG: Status unchanged, SKIPPING refresh.');
       }
     });
   }
@@ -39,155 +37,107 @@ class RouterRefreshNotifier extends ChangeNotifier {
 
 final routerRefreshProvider = Provider((ref) => RouterRefreshNotifier(ref));
 
+// Router provider utama
 final routerProvider = Provider<GoRouter>((ref) {
-  // DON'T watch authProvider here, otherwise the router gets recreated on every error message change!
-  // final authState = ref.watch(authProvider); 
   final refreshNotifier = ref.watch(routerRefreshProvider);
 
   return GoRouter(
     navigatorKey: rootNavigatorKey,
     initialLocation: '/splash',
     refreshListenable: refreshNotifier,
+    
+    // Redirect logic berdasarkan auth state
     redirect: (context, state) {
-      final authState = ref.read(authProvider); // Read latest state dynamically
+      final authState = ref.read(authProvider);
       final isLoggedIn = authState.status == AuthStatus.authenticated;
-      final isAuthRoute =
-          state.matchedLocation == '/login' ||
+      final isAuthRoute = state.matchedLocation == '/login' ||
           state.matchedLocation == '/register' ||
           state.matchedLocation == '/forgot-password';
       final isSplash = state.matchedLocation == '/splash';
 
-      // print('ROUTER DEBUG: Redirect Check inside ${state.matchedLocation}');
-      // print('ROUTER DEBUG: AuthStatus: ${authState.status}, isLoggedIn: $isLoggedIn');
-
       if (isSplash) return null;
-
-      if (!isLoggedIn && !isAuthRoute) {
-        // print('ROUTER DEBUG: Not logged in, redirecting to /login');
-        return '/login';
-      }
-
-      if (isLoggedIn && isAuthRoute) {
-        // print('ROUTER DEBUG: Logged in, redirecting to /home');
-        return '/home';
-      }
-
-      // print('ROUTER DEBUG: No redirect needed.');
+      if (!isLoggedIn && !isAuthRoute) return '/login';
+      if (isLoggedIn && isAuthRoute) return '/home';
       return null;
     },
+    
     routes: [
-      // Auth & Splash routes (outside shell)
-      GoRoute(
-        path: '/splash',
-        builder: (context, state) => const SplashScreen(),
-      ),
-      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(
-        path: '/register',
-        builder: (context, state) => const RegisterScreen(),
-      ),
-      GoRoute(
-        path: '/forgot-password',
-        builder: (context, state) => const ForgotPasswordScreen(),
-      ),
+      // Auth & Splash (tanpa bottom nav)
+      GoRoute(path: '/splash', builder: (_, __) => const SplashScreen()),
+      GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (_, __) => const RegisterScreen()),
+      GoRoute(path: '/forgot-password', builder: (_, __) => const ForgotPasswordScreen()),
 
-      // Main app with bottom navigation
+      // Main app dengan bottom navigation
       StatefulShellRoute.indexedStack(
-        builder: (context, state, navigationShell) {
-          return MainShell(navigationShell: navigationShell);
-        },
+        builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell),
         branches: [
-          // Home Branch
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/home',
-                builder: (context, state) => const HomeScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'announcement',
-                    builder: (context, state) => const AnnouncementListScreen(),
-                  ),
-                  GoRoute(
-                    path: 'peralatan',
-                    builder: (context, state) => const PeralatanListScreen(),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Kavling Branch
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/kavling',
-                builder: (context, state) => const KavlingListScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    pageBuilder: (context, state) {
-                      final id =
-                          int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-                      return _buildPageWithAnimation(
-                        KavlingDetailScreen(kavlingId: id),
-                        state,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Booking Branch
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/my-bookings',
-                builder: (context, state) => const MyBookingsScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    builder: (context, state) {
-                      final id =
-                          int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-                      return BookingDetailScreen(bookingId: id);
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
-          // Gallery Branch
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/gallery',
-                builder: (context, state) => const GalleryScreen(),
-              ),
-            ],
-          ),
-          // Profile Branch
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/profile',
-                builder: (context, state) => const ProfileScreen(),
-              ),
-            ],
-          ),
+          // Tab 1: Home
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home',
+              builder: (_, __) => const HomeScreen(),
+              routes: [
+                GoRoute(path: 'announcement', builder: (_, __) => const AnnouncementListScreen()),
+                GoRoute(path: 'peralatan', builder: (_, __) => const PeralatanListScreen()),
+              ],
+            ),
+          ]),
+          
+          // Tab 2: Kavling
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/kavling',
+              builder: (_, __) => const KavlingListScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  pageBuilder: (context, state) {
+                    final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+                    return _buildPageWithAnimation(KavlingDetailScreen(kavlingId: id), state);
+                  },
+                ),
+              ],
+            ),
+          ]),
+          
+          // Tab 3: My Bookings
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/my-bookings',
+              builder: (_, __) => const MyBookingsScreen(),
+              routes: [
+                GoRoute(
+                  path: ':id',
+                  builder: (context, state) {
+                    final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
+                    return BookingDetailScreen(bookingId: id);
+                  },
+                ),
+              ],
+            ),
+          ]),
+          
+          // Tab 4: Gallery
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/gallery', builder: (_, __) => const GalleryScreen()),
+          ]),
+          
+          // Tab 5: Profile
+          StatefulShellBranch(routes: [
+            GoRoute(path: '/profile', builder: (_, __) => const ProfileScreen()),
+          ]),
         ],
       ),
 
-      // Standalone routes (full screen, no bottom nav)
+      // Standalone routes (full screen, tanpa bottom nav)
       GoRoute(
         path: '/booking/new',
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final kavlingId = state.uri.queryParameters['kavling_id'];
           return _buildPageWithAnimation(
-            BookingFlowScreen(
-              kavlingId: kavlingId != null ? int.tryParse(kavlingId) : null,
-            ),
+            BookingFlowScreen(kavlingId: kavlingId != null ? int.tryParse(kavlingId) : null),
             state,
           );
         },
@@ -197,28 +147,24 @@ final routerProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: rootNavigatorKey,
         pageBuilder: (context, state) {
           final id = int.tryParse(state.pathParameters['id'] ?? '0') ?? 0;
-          return _buildPageWithAnimation(
-            BookingDetailScreen(bookingId: id),
-            state,
-          );
+          return _buildPageWithAnimation(BookingDetailScreen(bookingId: id), state);
         },
       ),
       GoRoute(
         path: '/announcement',
         parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (context, state) =>
-            _buildPageWithAnimation(const AnnouncementListScreen(), state),
+        pageBuilder: (context, state) => _buildPageWithAnimation(const AnnouncementListScreen(), state),
       ),
       GoRoute(
         path: '/peralatan',
         parentNavigatorKey: rootNavigatorKey,
-        pageBuilder: (context, state) =>
-            _buildPageWithAnimation(const PeralatanListScreen(), state),
+        pageBuilder: (context, state) => _buildPageWithAnimation(const PeralatanListScreen(), state),
       ),
     ],
   );
 });
 
+// Helper: Custom fade transition
 Page<dynamic> _buildPageWithAnimation(Widget child, GoRouterState state) {
   return CustomTransitionPage(
     key: state.pageKey,

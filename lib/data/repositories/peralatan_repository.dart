@@ -1,3 +1,5 @@
+// Peralatan Repository - Akses data peralatan camping
+
 import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/config/api_config.dart';
@@ -9,11 +11,8 @@ class PeralatanRepository {
   Future<List<Peralatan>> getAll() async {
     try {
       final response = await _apiClient.get(ApiConfig.peralatan);
-      
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List 
-            ? response.data 
-            : response.data['data'] ?? [];
+        final List<dynamic> data = response.data is List ? response.data : response.data['data'] ?? [];
         return data.map((json) => Peralatan.fromJson(json)).toList();
       }
       return [];
@@ -25,7 +24,6 @@ class PeralatanRepository {
   Future<Peralatan?> getById(int id) async {
     try {
       final response = await _apiClient.get('${ApiConfig.peralatan}/$id');
-      
       if (response.statusCode == 200) {
         final data = response.data is Map && response.data.containsKey('data')
             ? response.data['data']

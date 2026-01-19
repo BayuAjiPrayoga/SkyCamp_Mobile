@@ -1,3 +1,5 @@
+// Booking Repository - Operasi CRUD booking
+
 import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/config/api_config.dart';
@@ -6,14 +8,12 @@ import '../models/booking_model.dart';
 class BookingRepository {
   final ApiClient _apiClient = apiClient;
 
+  // Get daftar booking user
   Future<List<Booking>> getMyBookings() async {
     try {
       final response = await _apiClient.get(ApiConfig.bookings);
-      
       if (response.statusCode == 200) {
-        final List<dynamic> data = response.data is List 
-            ? response.data 
-            : response.data['data'] ?? [];
+        final List<dynamic> data = response.data is List ? response.data : response.data['data'] ?? [];
         return data.map((json) => Booking.fromJson(json)).toList();
       }
       return [];
@@ -22,13 +22,10 @@ class BookingRepository {
     }
   }
 
+  // Get detail booking
   Future<Booking?> getById(int id) async {
     try {
-      // print('[BookingRepository] Loading booking detail for ID: $id');
       final response = await _apiClient.get('${ApiConfig.bookings}/$id');
-      // print('[BookingRepository] Response status: ${response.statusCode}');
-      // print('[BookingRepository] Response data: ${response.data}');
-      
       if (response.statusCode == 200) {
         final data = response.data is Map && response.data.containsKey('data')
             ? response.data['data']
@@ -37,13 +34,11 @@ class BookingRepository {
       }
       return null;
     } on DioException catch (e) {
-      print('[BookingRepository] DioException: ${e.message}');
-      print('[BookingRepository] Status Code: ${e.response?.statusCode}');
-      print('[BookingRepository] Full Response: ${e.response?.data}');
       throw Exception(e.response?.data['message'] ?? 'Failed to fetch booking');
     }
   }
 
+  // Create booking baru
   Future<BookingResult> createBooking({
     required int kavlingId,
     required DateTime checkIn,
@@ -58,10 +53,7 @@ class BookingRepository {
         'items': items ?? [],
       };
 
-      final response = await _apiClient.post(
-        ApiConfig.bookings,
-        data: payload,
-      );
+      final response = await _apiClient.post(ApiConfig.bookings, data: payload);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = response.data is Map && response.data.containsKey('data')
@@ -69,26 +61,19 @@ class BookingRepository {
             : response.data;
         return BookingResult.success(booking: Booking.fromJson(data));
       }
-      
       return BookingResult.error(message: 'Failed to create booking');
     } on DioException catch (e) {
-      final message = e.response?.data['message'] ?? e.message ?? 'Failed to create booking';
-      return BookingResult.error(message: message);
+      return BookingResult.error(message: e.response?.data['message'] ?? e.message ?? 'Failed to create booking');
     } catch (e) {
       return BookingResult.error(message: e.toString());
     }
   }
 
+  // Upload bukti pembayaran
   Future<BookingResult> uploadPayment(int bookingId, String imagePath) async {
     try {
-      final formData = FormData.fromMap({
-        'bukti_pembayaran': await MultipartFile.fromFile(imagePath),
-      });
-
-      final response = await _apiClient.postFormData(
-        '${ApiConfig.bookings}/$bookingId/upload-payment',
-        formData,
-      );
+      final formData = FormData.fromMap({'bukti_pembayaran': await MultipartFile.fromFile(imagePath)});
+      final response = await _apiClient.postFormData('${ApiConfig.bookings}/$bookingId/upload-payment', formData);
 
       if (response.statusCode == 200) {
         final data = response.data is Map && response.data.containsKey('data')
@@ -96,20 +81,16 @@ class BookingRepository {
             : response.data;
         return BookingResult.success(booking: Booking.fromJson(data));
       }
-      
       return BookingResult.error(message: 'Upload failed');
     } on DioException catch (e) {
-      return BookingResult.error(
-        message: e.response?.data['message'] ?? 'Upload failed',
-      );
+      return BookingResult.error(message: e.response?.data['message'] ?? 'Upload failed');
     }
   }
 
+  // Cancel booking
   Future<BookingResult> cancelBooking(int bookingId) async {
     try {
-      final response = await _apiClient.post(
-        '${ApiConfig.bookings}/$bookingId/cancel',
-      );
+      final response = await _apiClient.post('${ApiConfig.bookings}/$bookingId/cancel');
 
       if (response.statusCode == 200) {
         final data = response.data is Map && response.data.containsKey('data')
@@ -117,17 +98,12 @@ class BookingRepository {
             : response.data;
         return BookingResult.success(booking: Booking.fromJson(data));
       }
-      
       return BookingResult.error(message: 'Cancel failed');
     } on DioException catch (e) {
-      return BookingResult.error(
-        message: e.response?.data['message'] ?? 'Cancel failed',
-      );
+      return BookingResult.error(message: e.response?.data['message'] ?? 'Cancel failed');
     }
   }
 }
-
-// End of Repository
 
 class BookingResult {
   final bool isSuccess;
@@ -135,14 +111,8 @@ class BookingResult {
   final String? message;
 
   BookingResult._({required this.isSuccess, this.booking, this.message});
-
-  factory BookingResult.success({required Booking booking}) {
-    return BookingResult._(isSuccess: true, booking: booking);
-  }
-
-  factory BookingResult.error({required String message}) {
-    return BookingResult._(isSuccess: false, message: message);
-  }
+  factory BookingResult.success({required Booking booking}) => BookingResult._(isSuccess: true, booking: booking);
+  factory BookingResult.error({required String message}) => BookingResult._(isSuccess: false, message: message);
 }
 
 final bookingRepository = BookingRepository();

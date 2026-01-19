@@ -1,3 +1,6 @@
+// Entry point aplikasi LuhurCamp Mobile
+// Inisialisasi: Firebase, NotificationService, Date Formatting
+
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -7,37 +10,45 @@ import 'core/router/app_router.dart';
 import 'core/theme/app_theme.dart';
 import 'core/services/notification_service.dart';
 
+// Handler untuk notifikasi background (harus top-level function)
+@pragma('vm:entry-point')
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Handle message silently di background
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // 1. Initialize Firebase first (Critical)
+  // Inisialisasi Firebase
   try {
     await Firebase.initializeApp();
-    // Background handler must be registered right after initialization
     FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
   } catch (e) {
     debugPrint('Firebase init failed: $e');
   }
-
-  // 2. Initialize Notification Service
+  
+  // Inisialisasi NotificationService
   try {
     await notificationService.initialize();
   } catch (e) {
     debugPrint('Notification Service init failed: $e');
   }
-
-  // 3. Subscribe to Announcements (Independent)
+  
+  // Subscribe ke topic announcements
   try {
     await notificationService.subscribeToTopic('announcements');
     debugPrint('FCM_TOPIC: Subscribed to announcements');
   } catch (e) {
     debugPrint('FCM_TOPIC: Subscription failed: $e');
   }
-
+  
+  // Inisialisasi format tanggal Indonesia
   await initializeDateFormatting('id_ID', null);
+  
   runApp(const ProviderScope(child: LuhurCampApp()));
 }
 
+// Root widget aplikasi
 class LuhurCampApp extends ConsumerWidget {
   const LuhurCampApp({super.key});
 
