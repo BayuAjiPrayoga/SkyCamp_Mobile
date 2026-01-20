@@ -1,33 +1,17 @@
 ﻿# 📱 LuhurCamp Mobile App Documentation
 
 Dokumentasi lengkap untuk aplikasi mobile LuhurCamp - Camping Ground Booking App.
-##  Dokumentasi Teknis
-
-Dokumen teknis detail tersedia di repository utama:
-
--   **[SRS (Software Requirement Specification)](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/SRS.md)**: Detail kebutuhan fungsional sistem.
--   **[SDD (System Design Document)](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/SDD.md)**: Arsitektur sistem, ERD, dan Topologi.
--   **[Technical Specification](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Technical_Spec.md)**: Stack teknologi dan standar kode.
--   **[Business Logic](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Business_Logic.md)**: Alur bisnis, flowchart, dan logika sistem.
--   **[Project Plan](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Project_Plan.md)**: Timeline dan roadmap pengembangan.
-
----
 
 ## 📋 Table of Contents
 
-1. [Overview](#overview)
-2. [Screenshots](#-screenshots)
-3. [Tech Stack](#tech-stack)
-4. [Project Structure](#project-structure)
-5. [Features](#features)
-6. [Setup & Installation](#setup--installation)
-7. [Architecture](#architecture)
-8. [API Integration](#api-integration)
-9. [Firebase Configuration](#firebase-configuration)
-10. [Push Notifications (FCM)](#push-notifications-fcm)
-11. [State Management](#state-management)
-12. [Screens & Navigation](#screens--navigation)
-13. [Build & Release](#build--release)
+1. [Overview](#-overview)
+2. [Demo](#-demo)
+3. [Screenshots](#-screenshots)
+4. [Tech Stack](#-tech-stack)
+5. [Project Structure](#-project-structure)
+6. [Features](#-features)
+7. [Setup & Installation](#-setup--installation)
+8. [Repository Terkait](#-repository-terkait)
 
 ---
 
@@ -35,11 +19,17 @@ Dokumen teknis detail tersedia di repository utama:
 
 LuhurCamp adalah aplikasi mobile untuk reservasi camping ground yang terintegrasi dengan backend Laravel. Aplikasi ini memungkinkan pengguna untuk:
 
--   Melihat daftar kavling (camping spot) yang tersedia
--   Melakukan booking kavling
--   Melihat status booking
--   Menerima notifikasi push
--   Melihat galeri dan pengumuman
+- Melihat daftar kavling (camping spot) yang tersedia
+- Melakukan booking kavling dengan pilihan peralatan
+- Melihat status booking dan upload bukti pembayaran
+- Menerima notifikasi push real-time
+- Melihat galeri foto dan pengumuman
+
+---
+
+## 🎬 Demo
+
+Demo video aplikasi LuhurCamp Mobile tersedia di folder `docs/img asset/demo.gif` (file lokal - tidak di-upload ke GitHub karena ukuran > 100MB).
 
 ---
 
@@ -47,35 +37,76 @@ LuhurCamp adalah aplikasi mobile untuk reservasi camping ground yang terintegras
 
 Berikut adalah tampilan aplikasi LuhurCamp Mobile:
 
-### Login & Register
+### Auth Screens
 
-|                            Login Screen                            |                            Register Screen                            |
-| :----------------------------------------------------------------: | :-------------------------------------------------------------------: |
-| ![Login](docs/img%20asset/Screenshot%202026-01-09%20221832.png) | ![Register](docs/img%20asset/Screenshot%202026-01-09%20221917.png) |
+<table>
+  <tr>
+    <td align="center"><b>Login</b></td>
+    <td align="center"><b>Register</b></td>
+    <td align="center"><b>Loading</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img%20asset/Loginpage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Registerpage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Loadingpage.png" width="200"/></td>
+  </tr>
+</table>
 
-### Home & Dashboard
+### Main Screens
 
-|                            Home Screen                            |                             Dashboard Menu                             |
-| :---------------------------------------------------------------: | :--------------------------------------------------------------------: |
-| ![Home](docs/img%20asset/Screenshot%202026-01-09%20221953.png) | ![Dashboard](docs/img%20asset/Screenshot%202026-01-09%20222043.png) |
+<table>
+  <tr>
+    <td align="center"><b>Home</b></td>
+    <td align="center"><b>Kavling</b></td>
+    <td align="center"><b>Booking</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img%20asset/Homepage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Kavlingpage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Bookingpage.png" width="200"/></td>
+  </tr>
+</table>
 
-### Kavling & Booking
+### Features Screens
 
-|                               Kavling List                                |                               Kavling Detail                                |
-| :-----------------------------------------------------------------------: | :-------------------------------------------------------------------------: |
-| ![Kavling List](docs/img%20asset/Screenshot%202026-01-09%20222112.png) | ![Kavling Detail](docs/img%20asset/Screenshot%202026-01-09%20222254.png) |
+<table>
+  <tr>
+    <td align="center"><b>Peralatan</b></td>
+    <td align="center"><b>Gallery</b></td>
+    <td align="center"><b>Pengumuman</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img%20asset/Peralatanpage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Galerypage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Pengumumanpage.png" width="200"/></td>
+  </tr>
+</table>
 
-### Booking Process
+### Profile & Notifications
 
-|                               Booking Form                                |                               My Bookings                                |
-| :-----------------------------------------------------------------------: | :----------------------------------------------------------------------: |
-| ![Booking Form](docs/img%20asset/Screenshot%202026-01-09%20222534.png) | ![My Bookings](docs/img%20asset/Screenshot%202026-01-09%20222558.png) |
+<table>
+  <tr>
+    <td align="center"><b>Profile</b></td>
+    <td align="center"><b>Notifikasi Real-time</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img%20asset/Profilpage.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Notifikasi-real-time.png" width="200"/></td>
+  </tr>
+</table>
 
-### Gallery & Pengumuman
+### Check-in & Check-out (Smart Scan)
 
-|                               Gallery                                |                               Pengumuman                                |
-| :------------------------------------------------------------------: | :---------------------------------------------------------------------: |
-| ![Gallery](docs/img%20asset/Screenshot%202026-01-09%20222617.png) | ![Pengumuman](docs/img%20asset/Screenshot%202026-01-09%20222636.png) |
+<table>
+  <tr>
+    <td align="center"><b>Check-in Popup</b></td>
+    <td align="center"><b>Check-out Popup</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img%20asset/Cekinpopup.png" width="200"/></td>
+    <td><img src="docs/img%20asset/Cekoutpopup.png" width="200"/></td>
+  </tr>
+</table>
 
 ---
 
@@ -99,100 +130,111 @@ Berikut adalah tampilan aplikasi LuhurCamp Mobile:
 
 ```
 lib/
-├── main.dart                    # Entry point
-├── core/                        # Core utilities
-│   ├── config/                  # App configuration
-│   │   └── api_config.dart      # API endpoints
-│   ├── network/                 # Networking
-│   │   └── api_client.dart      # Dio HTTP client
-│   ├── router/                  # Navigation
-│   │   └── app_router.dart      # GoRouter configuration
-│   ├── services/                # Services
-│   │   └── notification_service.dart  # FCM & local notifications
-│   ├── storage/                 # Local storage
-│   │   └── secure_storage.dart  # Secure token storage
-│   └── theme/                   # UI Theme
-│       └── app_theme.dart       # Colors, styles
-├── data/                        # Data layer
-│   ├── models/                  # Data models
-│   │   ├── user_model.dart
-│   │   ├── kavling_model.dart
-│   │   ├── booking_model.dart
-│   │   ├── peralatan_model.dart
-│   │   ├── gallery_model.dart
-│   │   └── announcement_model.dart
-│   └── repositories/            # API repositories
+├── main.dart                         # Entry point aplikasi
+│
+├── core/                             # Layer fondasi
+│   ├── config/
+│   │   └── api_config.dart           # Base URL & endpoint API
+│   ├── network/
+│   │   └── api_client.dart           # HTTP client Dio + auth token
+│   ├── router/
+│   │   └── app_router.dart           # Navigasi GoRouter
+│   ├── services/
+│   │   └── notification_service.dart # Push notification (FCM)
+│   ├── storage/
+│   │   └── secure_storage.dart       # Simpan token aman
+│   └── theme/
+│       └── app_theme.dart            # Warna, font, styling
+│
+├── data/                             # Layer data
+│   ├── models/
+│   │   ├── user_model.dart           # Data user
+│   │   ├── booking_model.dart        # Data pemesanan
+│   │   ├── kavling_model.dart        # Data slot camping
+│   │   ├── peralatan_model.dart      # Data peralatan sewa
+│   │   ├── gallery_model.dart        # Data foto galeri
+│   │   └── announcement_model.dart   # Data pengumuman
+│   │
+│   └── repositories/                 # Akses API
 │       ├── auth_repository.dart
-│       ├── kavling_repository.dart
 │       ├── booking_repository.dart
+│       ├── kavling_repository.dart
 │       ├── peralatan_repository.dart
 │       ├── gallery_repository.dart
 │       └── announcement_repository.dart
-└── presentation/                # UI layer
-    ├── providers/               # Riverpod providers
-    │   ├── auth_provider.dart
-    │   ├── kavling_provider.dart
-    │   ├── booking_provider.dart
-    │   └── ...
-    ├── screens/                 # App screens
-    │   ├── auth/
-    │   │   ├── login_screen.dart
-    │   │   └── register_screen.dart
-    │   ├── home/
-    │   │   └── home_screen.dart
-    │   ├── kavling/
-    │   │   ├── kavling_list_screen.dart
-    │   │   └── kavling_detail_screen.dart
-    │   ├── booking/
-    │   │   ├── booking_flow_screen.dart
-    │   │   ├── my_bookings_screen.dart
-    │   │   └── booking_detail_screen.dart
-    │   ├── profile/
-    │   │   └── profile_screen.dart
-    │   ├── gallery/
-    │   │   └── gallery_screen.dart
-    │   ├── announcement/
-    │   │   └── announcement_list_screen.dart
-    │   └── splash_screen.dart
-    └── widgets/                 # Reusable widgets
-        ├── custom_text_field.dart
-        ├── loading_button.dart
-        └── main_shell.dart
+│
+└── presentation/                     # Layer UI
+    ├── providers/                    # State management (Riverpod)
+    ├── screens/                      # Halaman UI
+    └── widgets/                      # Komponen reusable
 ```
+
+Untuk dokumentasi arsitektur lengkap, lihat [Penjelasan.md](Penjelasan.md).
 
 ---
 
 ## ✨ Features
 
 ### 1. Authentication
-
--   **Email/Password Login** - Traditional login
--   **Google Sign-In** - OAuth via Firebase Auth
--   **Auto Login** - Token persistence with secure storage
--   **Profile Management** - Update name, phone, avatar
+- **Email/Password Login** - Login tradisional
+- **Google Sign-In** - OAuth via Firebase Auth
+- **Auto Login** - Token persistence dengan secure storage
+- **Profile Management** - Update nama, telepon, avatar
 
 ### 2. Kavling Management
-
--   Browse available camping spots
--   View kavling details (capacity, facilities, price)
--   Real-time availability status
+- Browse camping spots yang tersedia
+- Lihat detail kavling (kapasitas, fasilitas, harga)
+- Status ketersediaan real-time
 
 ### 3. Booking System
+- Multi-step booking flow
+- Pilih tanggal check-in/check-out
+- Sewa peralatan camping (opsional)
+- QR Code untuk check-in/check-out
+- Tracking status booking
 
--   Multi-step booking flow
--   Date selection
--   Equipment rental (optional)
--   QR Code for check-in
--   Booking status tracking
+### 4. Push Notifications
+- Notifikasi real-time untuk update booking
+- Pengumuman dari admin
+- Topic subscription
+
+---
+
+## 🚀 Setup & Installation
+
+```bash
+# Clone repository
+git clone https://github.com/BayuAjiPrayoga/SkyCamp_Mobile.git
+
+# Masuk ke direktori
+cd SkyCamp_Mobile
+
+# Install dependencies
+flutter pub get
+
+# Run aplikasi
+flutter run
+```
 
 ---
 
 ## 📂 Repository Terkait
 
-| Repository                                                               | Deskripsi                         |
-| :----------------------------------------------------------------------- | :-------------------------------- |
+| Repository | Deskripsi |
+| :--------- | :-------- |
 | [LuhurCamp-Web-App](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App) | Backend Laravel + Web Admin Panel |
-| [SkyCamp_Mobile](https://github.com/BayuAjiPrayoga/SkyCamp_Mobile)       | Aplikasi Mobile Flutter           |
+| [SkyCamp_Mobile](https://github.com/BayuAjiPrayoga/SkyCamp_Mobile) | Aplikasi Mobile Flutter |
+
+---
+
+## 📚 Dokumentasi Teknis
+
+Dokumen teknis detail tersedia di repository utama:
+
+- **[SRS (Software Requirement Specification)](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/SRS.md)**
+- **[SDD (System Design Document)](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/SDD.md)**
+- **[Technical Specification](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Technical_Spec.md)**
+- **[Business Logic](https://github.com/BayuAjiPrayoga/LuhurCamp-Web-App/blob/main/docs/Business_Logic.md)**
 
 ---
 
@@ -216,7 +258,5 @@ This project is proprietary software for LuhurCamp.
 
 For technical support, contact:
 
--   Email: support@luhurcamp.com
--   Developer: Bayu Aji Prayoga
-
-
+- Email: support@luhurcamp.com
+- Developer: Bayu Aji Prayoga

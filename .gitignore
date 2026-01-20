@@ -82,3 +82,6 @@ coverage/
 
 # Gemini/AI related
 .gemini/
+
+# Large files (use Git LFS or external hosting)
+docs/img\ asset/demo.gif
