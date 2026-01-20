@@ -253,25 +253,13 @@ Dokumen teknis detail tersedia di repository utama:
 
 ---
 
-## 🤝 Contributing
+## 📄 Informasi Proyek
 
-1. Fork repository
-2. Create feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit changes (`git commit -m 'Add AmazingFeature'`)
-4. Push to branch (`git push origin feature/AmazingFeature`)
-5. Open Pull Request
+**UAS Mobile Programming 2**  
+**TIF RP-23 CNS A**
 
----
+| | |
+|---|---|
+| **Nama** | Bayu Aji Prayoga |
+| **NIM** | 23552011194 |
 
-## 📄 License
-
-This project is proprietary software for LuhurCamp.
-
----
-
-## 📞 Support
-
-For technical support, contact:
-
-- Email: support@luhurcamp.com
-- Developer: Bayu Aji Prayoga
