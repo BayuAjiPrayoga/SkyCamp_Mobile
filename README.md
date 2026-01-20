@@ -29,7 +29,9 @@ LuhurCamp adalah aplikasi mobile untuk reservasi camping ground yang terintegras
 
 ## 🎬 Demo
 
-Demo video aplikasi LuhurCamp Mobile tersedia di folder `docs/img asset/demo.gif` (file lokal - tidak di-upload ke GitHub karena ukuran > 100MB).
+<p align="center">
+  <img src="docs/img%20asset/demo.gif" alt="Demo LuhurCamp Mobile" width="300"/>
+</p>
 
 ---
 
