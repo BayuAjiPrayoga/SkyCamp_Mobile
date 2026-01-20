@@ -58,12 +58,25 @@ Berikut adalah tampilan aplikasi LuhurCamp Mobile:
   <tr>
     <td align="center"><b>Home</b></td>
     <td align="center"><b>Kavling</b></td>
-    <td align="center"><b>Booking</b></td>
+    <td align="center"><b>Booking List</b></td>
   </tr>
   <tr>
     <td><img src="docs/img%20asset/Homepage.png" width="200"/></td>
     <td><img src="docs/img%20asset/Kavlingpage.png" width="200"/></td>
     <td><img src="docs/img%20asset/Bookingpage.png" width="200"/></td>
+  </tr>
+</table>
+
+### Booking Detail & QR Ticket
+
+<table>
+  <tr>
+    <td align="center"><b>Booking Detail</b></td>
+    <td align="center"><b>Tiket QR</b></td>
+  </tr>
+  <tr>
+    <td><img src="docs/img%20asset/detailbooking.png" width="200"/></td>
+    <td><img src="docs/img%20asset/tiketqr.png" width="200"/></td>
   </tr>
 </table>
 
